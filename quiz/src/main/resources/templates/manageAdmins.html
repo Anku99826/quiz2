@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8">
+<title>Admin Management</title>
+<link rel="stylesheet" href="/css/local/manage-admins.css">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/all.min.css">
+<link rel="stylesheet" href="/css/local/adminDashboard.css">
+<script src="/js/bootstrap.bundle.min.js" defer></script>
+</head>
+
+
+
+
+<body>
+
+	<!-- Logout Modal -->
+	<div class="modal fade" id="logoutModal" tabindex="-1">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+
+				<div class="modal-header">
+					<h5 class="modal-title">Confirm Logout</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+
+				<div class="modal-body">Are you sure you want to logout?</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-bs-dismiss="modal">Cancel</button>
+					<form th:action="@{/logout}" method="post">
+						<button type="submit" class="btn btn-danger">
+							<i class="fas fa-sign-out-alt me-2"></i> Logout
+						</button>
+					</form>
+				</div>
+
+
+			</div>
+		</div>
+	</div>
+
+	<!-- Navbar -->
+	<nav class="navbar navbar-expand-lg bg-body-tertiary">
+		<div class="container-fluid">
+			<a class="navbar-brand" href="/admin/dashboard"> <img
+				src="/images/logo3.png" alt="Logo" class="img-fluid"
+				style="max-height: 100px; padding: 5px;">
+			</a>
+			<button class="navbar-toggler" type="button"
+				data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<ul class="navbar-nav me-auto mb-2 mb-lg-0">	
+				<li class="nav-item"><a class="nav-link"
+						href="/admin/dashboard">Home</a></li>
+					<li class="nav-item"><a class="nav-link"
+						href="/admin/manage-users">Manage Admins</a></li>
+					<li class="nav-item"><a class="nav-link" href="/admin/quizzes">Quizzes</a></li>
+					<li class="nav-item"><a class="nav-link"
+						href="/admin/questions/upload">Upload Questions</a></li>
+				</ul>
+
+				<form class="d-flex me-2" role="search">
+					<input class="form-control me-2" type="search" placeholder="Search">
+					<button class="btn btn-outline-success" type="submit">Search</button>
+				</form>
+
+				<!-- Admin Info + Logout -->
+				<div class="d-flex align-items-center gap-3 ms-3">
+					<span class="fw-semibold text-dark"> <i
+						class="fas fa-user-shield"></i> <span sec:authentication="name"></span>
+					</span>
+					<button class="btn btn-danger" data-bs-toggle="modal"
+						data-bs-target="#logoutModal">
+						<i class="fas fa-sign-out-alt"></i> Logout
+					</button>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+
+	<div class="admin-container">
+
+		<h2>Manage Admin Accounts</h2>
+
+		<form th:action="@{/admin/manage-users/create}" method="post"
+			class="create-admin-form">
+
+			<input class="form-control" name="loginId" placeholder="Login ID"
+				required> <input class="form-control" name="password"
+				type="password" placeholder="Password" required> <select
+				class="form-select" name="role">
+				<option value="ROLE_ADMIN">Admin</option>
+				<option value="ROLE_SUPER_ADMIN">Super Admin</option>
+			</select>
+
+			<button class="btn btn-success" type="submit">Create Admin</button>
+		</form>
+
+		<table class="admin-table mt-4">
+			<thead>
+				<tr>
+					<th>Login ID</th>
+					<th>Role</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+
+			<tbody>
+				<tr th:each="a : ${admins}">
+					<td th:text="${a.loginId}"></td>
+					<td th:text="${a.role}"></td>
+					<td>
+						<div class="action-group">
+							<form th:action="@{/admin/manage-users/reset/{id}(id=${a.id})}"
+								method="post">
+								<input class="form-control" name="password"
+									placeholder="New Password" required>
+								<button class="btn btn-reset" type="submit">Reset</button>
+							</form>
+
+							<form th:action="@{/admin/manage-users/delete/{id}(id=${a.id})}"
+								method="post">
+								<button class="btn btn-delete" type="submit">Delete</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+	</div>
+
+</body>
+</html>

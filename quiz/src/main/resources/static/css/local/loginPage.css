@@ -1,0 +1,167 @@
+    :root {
+      --primary: #1968b3;
+      --primary-hover: #12508a;
+      --background-gradient: linear-gradient(135deg, #e0f7fa, #f8f9fa);
+      --card-bg: #ffffff;
+      --text-color: #212529;
+      --font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+
+      font-family: var(--font);
+      margin: 0;
+      background: var(--background-gradient);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      border-radius: 1rem;
+      background-color: var(--card-bg);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      width: 100%;
+      max-width: 420px;
+      padding: 2.2rem;
+      text-align: center;
+      animation: fadeIn 0.8s ease forwards;
+      transform: translateY(10px);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .login-card:hover {
+      transform: translateY(0);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .login-card img {
+      max-height: 120px;
+      margin-bottom: 1rem;
+    }
+
+    h3 {
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+      border-radius: 0.5rem;
+      padding: 0.8rem 1rem;
+    }
+
+    .input-group-text {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+
+    /* 🔹 Custom button style for equal size */
+    .btn-custom {
+      flex: 1;
+      padding: 0.8rem;
+      font-weight: 600;
+      font-size: 1rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary-custom {
+      background-color: var(--primary);
+      color: #fff;
+      border: none;
+    }
+
+    .btn-primary-custom:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary-custom {
+      background-color: #6c757d;
+      color: #fff;
+      border: none;
+    }
+
+    .btn-secondary-custom:hover {
+      background-color: #5a6268;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .captcha-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.captcha-container {
+  flex: 1 1 160px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: repeating-linear-gradient(
+    45deg,
+    #f8f9fa,
+    #f8f9fa 10px,
+    #e9ecef 10px,
+    #e9ecef 20px
+  );
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-family: monospace;
+  font-weight: bold;
+  letter-spacing: 3px;
+  font-size: 22px;
+  user-select: none;
+  overflow: hidden;
+}
+
+#captchaCode {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.captcha-char {
+  display: inline-block;
+  transform-origin: center;
+}
+
+.captcha-refresh {
+  cursor: pointer;
+  color: #007bff;
+  margin-left: 10px;
+  transition: transform 0.3s ease;
+}
+
+.captcha-refresh:hover {
+  transform: rotate(90deg);
+}
+
+#captchaInput {
+  flex: 1 1 160px;
+  min-width: 120px;
+}
+
+#captchaError {
+  font-size: 0.9rem;
+}
+    

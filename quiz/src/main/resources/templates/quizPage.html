@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Online Examination</title>
+<link rel="stylesheet" th:href="@{/css/local/quizPage.css}">
+</head>
+<body>
+
+	<!-- HEADER -->
+	<div class="exam-header">
+		<div class="exam-title">Online Examination</div>
+		<div class="timer" id="timer">Timer</div>
+	</div>
+
+	<div class="exam-container">
+
+		<!-- LEFT PANEL -->
+		<div class="question-panel">
+
+			<form id="examForm" method="post" action="/exam/save" style="height: 100%; display: flex; flex-direction: column;">
+
+
+				<!-- SCROLLABLE CONTENT -->
+				<div class="question-content">
+
+					<div class="question-header">
+						Question No. <span th:text="${index + 1}"></span>
+					</div>
+
+					<div class="question-text" th:text="${question.questionText}"></div>
+
+					<input type="hidden" name="index" th:value="${index}" />
+
+					<div class="options">
+						<label> <input type="radio" name="answer" value="A"
+							th:checked="${selectedAnswer == 'A'}" /> <span
+							th:text="${question.optionA}"></span>
+						</label> <label> <input type="radio" name="answer" value="B"
+							th:checked="${selectedAnswer == 'B'}" /> <span
+							th:text="${question.optionB}"></span>
+						</label> <label> <input type="radio" name="answer" value="C"
+							th:checked="${selectedAnswer == 'C'}" /> <span
+							th:text="${question.optionC}"></span>
+						</label> <label> <input type="radio" name="answer" value="D"
+							th:checked="${selectedAnswer == 'D'}" /> <span
+							th:text="${question.optionD}"></span>
+						</label>
+					</div>
+				</div>
+
+				<!-- FOOTER (LEFT PANEL) -->
+				<div class="panel-footer">
+					
+
+					<div class="buttons-row">
+						<button type="submit" name="action" value="clear"
+							class="btn clear">Clear Response</button>
+
+						<button type="submit" name="action" value="next" class="btn save">
+							Save & Next</button>
+					</div>
+					<div class="note">Note: Please save before jumping to next question else the answer will not be saved!</div>
+				</div>
+
+
+
+			</form>
+		</div>
+
+		<!-- RIGHT PANEL -->
+		<div class="palette-panel">
+
+			<!-- SCROLLABLE CONTENT -->
+			<div class="palette-content">
+				<div class="palette-header">Question Palette</div>
+
+				<div class="palette">
+					<a th:each="i : ${#numbers.sequence(0, total-1)}"
+						th:href="@{/exam/question(n=${i})}" th:text="${i + 1}"
+						th:classappend="
+       ${statusMap[i] != null ? statusMap[i].name().toLowerCase() : 'not_visited'} 
+       + (${i} == ${index} ? ' current' : '')
+   ">
+					</a>
+
+				</div>
+			</div>
+
+			<!-- STICKY LEGEND + SUBMIT -->
+			<div class="panel-footer">
+				<div class="legend">
+					<div>
+						<span class="box not_visited"></span> Not Visited
+					</div>
+					<div>
+						<span class="box visited"></span> Visited
+					</div>
+					<div>
+						<span class="box attempted"></span> Attempted
+					</div>
+					<div>
+						<span class="box review"></span> Marked for Review
+					</div>
+				</div>
+
+				<form method="post" action="/exam/submit">
+					<button type="submit" class="btn submit">Submit Exam</button>
+				</form>
+			</div>
+
+		</div>
+
+
+	</div>
+
+	<!-- TIMER SCRIPT -->
+	<script th:inline="javascript">
+    let time = [[${remainingSeconds}]];
+</script>
+	<script th:src="@{/js/local/timer.js}"></script>
+
+</body>
+</html>

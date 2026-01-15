@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Online Examination Portal</title>
+<link rel="stylesheet" href="/css/local/examHomepage.css">
+</head>
+<body>
+
+	<div class="header">
+		<h2>
+			Welcome, <b th:text="${#authentication.name}">User</b>
+		</h2>
+		<h2>Online Examination Portal</h2>
+		<p>Welcome to the Examination System</p>
+	</div>
+
+
+
+	<div class="container">
+		<h3>Select Examination</h3>
+
+		<form method="post" action="/exam/begin">
+			<label>Select Type :</label> <select name="quizType" required>
+				<option value="">-- Select --</option>
+				<option th:each="quiz : ${quizTypes}" th:value="${quiz.title}"
+					th:text="${quiz.title}"></option>
+			</select>
+			<div>
+
+
+				<h2>General Instructions</h2>
+
+				<ul>
+					<li>Total Questions: 30</li>
+					<li>Total Time: 30 Minutes</li>
+					<li>Each question carries 1 mark</li>
+					<li>No negative marking</li>
+					<li>Do not refresh the page</li>
+				</ul>
+
+
+				<label> <input type="checkbox" required> I have read
+					and understood the instructions
+				</label>
+			</div>
+			<button type="submit">Start Exam</button>
+		</form>
+	</div>
+
+
+
+
+	<footer>
+		<p>© 2026 Online Examination System</p>
+	</footer>
+
+</body>
+</html>

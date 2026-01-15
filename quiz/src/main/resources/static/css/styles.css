@@ -1,0 +1,108 @@
+/* General Styles */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+    color: #333;
+}
+
+/* Header Styles */
+/* Header Styles */
+.dashboard-header {
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative; /* Added to contain the dropdown */
+}
+
+.dashboard-header h1 {
+    font-size: 2rem;
+    margin: 0;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    padding: 15px;
+    margin-bottom: 15px;
+    width: 100%; /* Adjust width to make the card wider */
+    margin: 0 auto; /* Center the card horizontally */
+}
+
+/* Table Styles */
+.table {
+    font-size: 0.9rem;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 8px;
+    text-align: left;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #f2f2f2;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Button Styles */
+.btn {
+    font-size: 0.85rem;
+    padding: 5px 10px;
+}
+
+/* Utility Classes */
+.mt-5 {
+    margin-top: 2rem;
+}
+
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.container {
+    max-width: 85%; /* Adjust the width as needed */
+    margin: 0 auto; /* Center the container */
+}
+
+/* Center the counts */
+.observations-container {
+    display: flex;
+    justify-content: center; /* Align items horizontally in the center */
+    align-items: center; /* Align items vertically in the center */
+    gap: 20px; /* Add spacing between the items */
+    margin-bottom: 20px; /* Add spacing below the container */
+}
+
+.observations-container p {
+    font-size: 1.2rem; /* Adjust font size for better readability */
+    margin: 0; /* Remove default margin */
+}
+
+.dropdown-menu {
+    min-width: 200px;
+    text-align: left;
+}
+.dropdown-item-text {
+    font-size: 0.9rem;
+    color: #333;
+}
+
+/* Table cell styling for word wrapping */
+.table td {
+    word-wrap: break-word; /* Break long words */
+    white-space: normal; /* Allow text to wrap */
+    line-height: 1.5; /* Adjust line height for readability */
+    max-height: 3em; /* Limit height to approximately 3 lines */
+    overflow: hidden; /* Hide overflow content */
+    text-overflow: ellipsis;
+     max-width: 300px;
+}

@@ -1,0 +1,254 @@
+/* RESET + PAGE CONTROL */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    overflow: hidden;
+}
+
+/* HEADER */
+.exam-header {
+    background: #003366;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+}
+
+/* MAIN LAYOUT */
+.exam-container {
+    display: flex;
+    padding: 15px;
+    height: calc(100vh - 60px);
+    box-sizing: border-box;
+}
+
+/* PANELS COMMON */
+.question-panel,
+.palette-panel {
+    display: flex;
+    flex-direction: column; /* 🔑 enables sticky footer */
+    background: white;
+    border: 1px solid #ccc;
+}
+
+/* LEFT PANEL */
+.question-panel {
+    width: 70%;
+    padding: 20px;
+}
+
+/* RIGHT PANEL */
+.palette-panel {
+    width: 30%;
+    margin-left: 15px;
+    padding: 15px;
+}
+
+/* SCROLLABLE CONTENT */
+.question-content,
+.palette-content {
+    flex: 1;
+    overflow-y: auto; /* ✅ scrolling happens here */
+}
+
+/* QUESTION CONTENT */
+.question-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.question-text {
+    margin-bottom: 15px;
+}
+
+/* OPTIONS */
+.options label {
+    display: block;
+    padding: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+.options input {
+    margin-right: 10px;
+}
+
+/* PANEL FOOTER (STICKY) */
+.panel-footer {
+    border-top: 1px solid #ddd;
+    padding: 10px;
+    background: white;
+    position: sticky;
+    bottom: 0;
+    text-align: center;
+}
+/* Make buttons smaller and side by side */
+.panel-footer .btn {
+    padding: 10px 10px;      /* smaller padding */
+    font-size: 13px;        /* slightly smaller text */
+    width: auto;            /* don't stretch full width */
+    min-width: 100px;       /* optional minimum width */
+    margin-right: 10px;     /* space between buttons */
+}
+
+/* Optional: remove margin for last button */
+.panel-footer .btn:last-child {
+    margin-right: 0;
+}
+
+/* Note styling */
+.panel-footer .note {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+
+/* BUTTONS */
+.btn {
+    padding: 8px 14px;
+    border: none;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.save {
+    background: #4caf50;
+    color: white;
+}
+
+.clear {
+    background: #9e9e9e;
+    color: white;
+}
+
+.submit {
+    background: red;
+    color: white;
+    width: 100%;
+}
+
+/* PALETTE HEADER */
+.palette-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* PALETTE GRID */
+.palette {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+/* PALETTE BUTTONS */
+.palette a {
+    display: block;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #aaa;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* PALETTE STATUS COLORS */
+.palette a.not_visited {
+    background: lightgrey;
+    color: black;
+}
+
+.palette a.visited {
+    background: #2196f3;
+    color: white;
+}
+
+.palette a.attempted {
+    background: #4caf50;
+    color: white;
+}
+
+.palette a.review {
+    background: #ff9800;
+    color: white;
+}
+
+/* current question highlight */
+.palette a.current {
+    border: 2px solid red;
+    box-shadow: 0 0 5px rgba(255,0,0,0.7);
+}
+
+
+/* LEGEND PANEL */
+.legend {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+    font-size: 13px;
+}
+/* RIGHT PANEL FLEX */
+.palette-panel {
+    width: 30%;
+    margin-left: 15px;
+    background: white;
+    border: 1px solid #ccc;
+
+    display: flex;
+    flex-direction: column; /* make it column */
+    height: 100%;
+}
+
+/* SCROLLABLE PALETTE CONTENT */
+.palette-content {
+    flex: 1;
+    overflow-y: auto; /* only this scrolls */
+    padding: 15px;
+}
+
+/* STICKY FOOTER */
+.panel-footer {
+    border-top: 1px solid #ddd;
+    padding: 10px 15px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* LEGEND */
+.legend div {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+}
+
+.box {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.box.not_visited { background: lightgrey; }
+.box.visited { background: #2196f3; }
+.box.attempted { background: #4caf50; }
+.box.review { background: #ff9800; }
+
+
+
+.btn.submit {
+    width: 100%;
+    background: red;
+    color: white;
+    padding: 8px 14px;
+    border: none;
+    cursor: pointer;
+}
+
+

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Exam Summary</title>
+<link rel="stylesheet" th:href="@{/css/local/examSummary.css}">
+</head>
+<body>
+
+	<div class="summary-container">
+ <div class="thankyou-message">
+        Thank you for appearing. Results will be declared soon.
+    </div>
+    <h2>Exam Summary</h2>
+
+   
+
+    <p>
+        <b>Candidate Name:</b> <span th:text="${candidateName}"></span>
+    </p>
+    <p>
+        <b>Exam Type:</b> <span th:text="${examType}"></span>
+    </p>
+    <p>
+        <b>Total Questions:</b> <span th:text="${total}"></span>
+    </p>
+    <p>
+        <b>Attempted:</b> <span th:text="${attempted}"></span>
+    </p>
+    <p>
+        <b>Unattempted:</b> <span th:text="${unattempted}"></span>
+    </p>
+    <p>
+        <b>Marked for Review:</b> <span th:text="${review}"></span>
+    </p>
+    <p>
+        <b>Score:</b> <span th:text="${score}"></span>
+    </p>
+
+    <div class="actions">
+        <a href="/exam/home" class="btn home">Home</a>
+    </div>
+
+</div>
+
+
+</body>
+</html>
