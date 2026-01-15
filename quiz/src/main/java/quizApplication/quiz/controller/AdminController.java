@@ -100,6 +100,9 @@ public class AdminController {
 	        RedirectAttributes redirectAttributes) {
 
 	    try {
+	    	
+	    	
+	    	
 	        if (file.isEmpty()) {
 	            redirectAttributes.addFlashAttribute("error", "Please upload a CSV file");
 	            return "redirect:/admin/questions/upload";
@@ -111,7 +114,7 @@ public class AdminController {
 	        List<Question> questions = csvParser.parse(file);
 
 	        for (Question q : questions) {
-	            // 🔥 THIS IS THE FIX
+
 	            q.setQuiz(quiz);
 	        }
 
@@ -130,6 +133,30 @@ public class AdminController {
 	}
 
 	//QUIZ 
+	
+	@PostMapping("/quiz/create")
+	public String createQuiz(
+	        @RequestParam String title,
+	        @RequestParam int timeLimit,
+	        @RequestParam double negativeMark,
+	        @RequestParam int totalMarks,
+	        RedirectAttributes redirectAttributes) {
+
+	    Quiz quiz = new Quiz();
+	    quiz.setTitle(title);
+	    quiz.setTimeLimit(timeLimit);
+	    quiz.setNegativeMark(negativeMark);
+	    quiz.setTotalMarks(totalMarks);
+	    quiz.setActive(true);
+
+	    quizRepository.save(quiz);
+
+	    redirectAttributes.addFlashAttribute(
+	            "success", "Quiz created successfully. Now upload questions.");
+
+	    return "redirect:/admin/questions/upload";
+	}
+
 	
 	@GetMapping("/quizzes")
     public String listQuizzes(Model model) {

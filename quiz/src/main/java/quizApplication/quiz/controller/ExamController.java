@@ -2,6 +2,7 @@ package quizApplication.quiz.controller;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +93,7 @@ public class ExamController {
     public String question(@RequestParam(required = false) Integer n,
                            Model model,
                            HttpSession session) {
-
+    	
         List<Question> questions =
                 (List<Question>) session.getAttribute("questions");
 
@@ -116,26 +117,38 @@ public class ExamController {
 
         int index = (n != null) ? n : (int) session.getAttribute("currentQuestion");
 
-        if (index < 0) index = 0;
-        if (index >= questions.size()) index = questions.size() - 1;
-
+        index = Math.max(0, Math.min(index, questions.size() - 1));
         session.setAttribute("currentQuestion", index);
 
+    
         Map<Integer, QuestionStatus> statusMap =
                 (Map<Integer, QuestionStatus>) session.getAttribute("statusMap");
+
+        if (statusMap == null) {
+            statusMap = new HashMap<>();
+        }
 
         Map<Integer, String> answers =
                 (Map<Integer, String>) session.getAttribute("answers");
 
-
-        String selectedAnswer = answers.get(index);
+        String selectedAnswer = answers != null ? answers.get(index) : null;
         model.addAttribute("selectedAnswer", selectedAnswer);
 
+  
         QuestionStatus current = statusMap.get(index);
-
         if (current == null || current == QuestionStatus.NOT_VISITED) {
             statusMap.put(index, QuestionStatus.VISITED);
         }
+        List<String> paletteClasses = new ArrayList<>();
+
+    	for (int i = 0; i < questions.size(); i++) {
+    	    QuestionStatus s = statusMap.get(i);
+    	    paletteClasses.add(
+    	        s == null ? "not_visited" : s.name().toLowerCase()
+    	    );
+    	}
+
+    	model.addAttribute("paletteClasses", paletteClasses);
 
         session.setAttribute("statusMap", statusMap);
 
@@ -143,11 +156,10 @@ public class ExamController {
         model.addAttribute("index", index);
         model.addAttribute("total", questions.size());
         model.addAttribute("statusMap", statusMap);
-
+        System.out.println("STATUS MAP = " + statusMap);
         return "quizPage";
     }
 
-    
     
     @PostMapping("/save")
     public String saveAnswer(

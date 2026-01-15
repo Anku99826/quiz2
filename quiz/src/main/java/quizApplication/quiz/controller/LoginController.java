@@ -133,8 +133,48 @@ public class LoginController {
 	        model.addAttribute("error", "Invalid username or password");
 	    }
 
-	    return "loginPage";
+	    return "userLoginPage";
 	}
+	
+	
+	@PostMapping("/user2")
+	private String loginForTestUser(
+	        @RequestParam String username,
+	        @RequestParam String password,
+	        Model model,
+	        HttpServletRequest request) {
+		System.err.println("INSIDE TEST LOGIN METHOD");
+		
+	    // ===== TEST LOGIN ONLY =====
+	    if ("test".equals(username) && "test".equals(password)) {
+
+	        UsernamePasswordAuthenticationToken auth =
+	                new UsernamePasswordAuthenticationToken(
+	                        username,
+	                        null,
+	                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+	                );
+
+	        SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(auth);
+
+            SecurityContextHolder.setContext(context);
+
+            request.getSession(true)
+                   .setAttribute(
+                       HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                       context
+                   );
+
+
+	        return "redirect:/user/dashboard";
+	    }
+
+	    model.addAttribute("error", "Invalid username or password");
+	    return "userLoginPage";
+	}
+
+	
 	
 	
 	private void saveSecurityContext(

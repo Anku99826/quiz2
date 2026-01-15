@@ -4,6 +4,8 @@
 <title>Online Examination</title>
 <link rel="stylesheet" th:href="@{/css/local/quizPage.css}">
 </head>
+<h1 style="color:red">TEMPLATE VERSION 123</h1>
+
 <body>
 
 	<!-- HEADER -->
@@ -75,13 +77,11 @@
 				<div class="palette-header">Question Palette</div>
 
 				<div class="palette">
-					<a th:each="i : ${#numbers.sequence(0, total-1)}"
-						th:href="@{/exam/question(n=${i})}" th:text="${i + 1}"
-						th:classappend="
-       ${statusMap[i] != null ? statusMap[i].name().toLowerCase() : 'not_visited'} 
-       + (${i} == ${index} ? ' current' : '')
-   ">
-					</a>
+	<a th:each="i : ${#numbers.sequence(0, total-1)}"
+   th:href="@{/exam/question(n=${i})}"
+   th:text="${i + 1}"
+   th:class="${paletteClasses[i]}">
+</a>
 
 				</div>
 			</div>
