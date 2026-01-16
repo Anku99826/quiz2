@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>CSV Preview</title>
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+</head>
+
+<body class="container mt-4">
+
+	<h3>Preview Questions</h3>
+	<p>
+		<strong>Quiz:</strong> <span th:text="${quiz.title}"></span>
+	</p>
+
+	<table class="table table-bordered table-sm mt-3">
+		<thead class="table-dark">
+			<tr>
+				<th>#</th>
+				<th>Question</th>
+				<th>A</th>
+				<th>B</th>
+				<th>C</th>
+				<th>D</th>
+				<th>Correct</th>
+				<th>Marks</th>
+				<th>Negative</th>
+				<th>Error Message</th>
+				<th>Delete</th>
+			</tr>
+		</thead>
+
+		<tbody>
+
+			<tr th:each="q,stat : ${previewQuestions}"
+				th:classappend="${!q.valid} ? 'table-danger' : ''">
+
+				<td th:text="${stat.count}"></td>
+				<td th:text="${q.questionText}"></td>
+
+				<td th:text="${q.optionA}"></td>
+				<td th:text="${q.optionB}"></td>
+				<td th:text="${q.optionC}"></td>
+				<td th:text="${q.optionD}"></td>
+				<td th:text="${q.correctAnswer}"></td>
+				<td th:text="${q.marks}"></td>
+				<td th:text="${q.negativeMarks}"></td>
+				<td><span th:if="${!q.valid}" class="text-danger fw-bold"
+					th:text="${q.errorMessage}"> </span></td>
+				<td>
+					<form th:action="@{/admin/questions/upload/remove/{index}(index=${stat.index},quizType=${q.quizType})}"
+						method="post">
+
+						<button class="btn btn-sm btn-danger">
+							<i class="fas fa-trash"></i>
+						</button>
+					</form>
+				</td>
+
+			</tr>
+
+		</tbody>
+	</table>
+
+	<div class="mt-4 d-flex gap-3">
+		<form th:action="@{/admin/questions/upload/confirm}" method="post">
+			<button class="btn btn-success">Confirm & Save</button>
+		</form>
+
+		<a href="/admin/questions/upload" class="btn btn-secondary">
+			Cancel </a>
+	</div>
+
+</body>
+</html>

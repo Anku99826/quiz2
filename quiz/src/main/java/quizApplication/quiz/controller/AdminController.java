@@ -4,8 +4,6 @@ import java.security.Principal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +11,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttribute;
+import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -26,6 +27,7 @@ import quizApplication.quiz.utility.CsvQuestionParser;
 
 @Controller
 @RequestMapping("/admin")
+@SessionAttributes({"previewQuestions" , "quiz"})
 public class AdminController {
 	
 	private final AdminUserService service;
@@ -97,12 +99,10 @@ public class AdminController {
 	public String uploadCsv(
 	        @RequestParam("file") MultipartFile file,
 	        @RequestParam("quizId") Long quizId,
+	        Model model,
 	        RedirectAttributes redirectAttributes) {
 
 	    try {
-	    	
-	    	
-	    	
 	        if (file.isEmpty()) {
 	            redirectAttributes.addFlashAttribute("error", "Please upload a CSV file");
 	            return "redirect:/admin/questions/upload";
@@ -113,25 +113,57 @@ public class AdminController {
 
 	        List<Question> questions = csvParser.parse(file);
 
-	        for (Question q : questions) {
+	        // Attach quiz but DO NOT SAVE
+	        questions.forEach(q -> q.setQuiz(quiz));
 
-	            q.setQuiz(quiz);
-	        }
+	        model.addAttribute("previewQuestions", questions);
+	        model.addAttribute("quiz", quiz);
 
-	        questionRepo.saveAll(questions);
-
-	        redirectAttributes.addFlashAttribute(
-	            "success",
-	            questions.size() + " questions uploaded successfully"
-	        );
+	        return "admin-question-preview"; // preview page
 
 	    } catch (Exception e) {
-	        redirectAttributes.addFlashAttribute("error", "CSV upload failed: " + e.getMessage());
+	        redirectAttributes.addFlashAttribute(
+	            "error",
+	            "CSV upload failed: " + e.getMessage()
+	        );
+	        return "redirect:/admin/questions/upload";
 	    }
+	}
+	
+	@PostMapping("/questions/upload/confirm")
+	public String confirmUpload(
+	        @SessionAttribute("previewQuestions") List<Question> questions,
+	        SessionStatus sessionStatus,
+	        RedirectAttributes redirectAttributes) {
+
+	    questionRepo.saveAll(questions);
+
+	    sessionStatus.setComplete(); // clear session
+
+	    redirectAttributes.addFlashAttribute(
+	        "success",
+	        questions.size() + " questions uploaded successfully"
+	    );
 
 	    return "redirect:/admin/questions/upload";
 	}
 
+	
+	@PostMapping("/questions/upload/remove/{index}")
+	public String removeQuestion(
+	        @PathVariable int index,
+	        @SessionAttribute("previewQuestions") List<Question> questions,@SessionAttribute("quiz") Quiz quiz, Model model) {
+
+	    if (index >= 0 && index < questions.size()) {
+	        questions.remove(index);
+	    }
+	    model.addAttribute("quiz", quiz);
+	    return "admin-question-preview";
+	}
+
+	
+	
+	
 	//QUIZ 
 	
 	@PostMapping("/quiz/create")

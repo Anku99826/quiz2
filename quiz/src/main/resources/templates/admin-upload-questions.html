@@ -11,7 +11,7 @@
 </head>
 
 <body>
-	<div th:insert="fragments/adminLayout :: adminLayout">...</div>	
+	<div th:insert="fragments/adminLayout :: adminLayout">...</div>
 	<!-- Create A new Quiz -->
 	<div class="container mt-4 shadow-sm p-4 rounded">
 
@@ -36,7 +36,7 @@
 
 			<div class="col-md-4">
 				<label class="form-label">Negative Mark</label> <input type="number"
-					step="0.25" name="negativeMark" class="form-control" value="0.25"
+					step="1" name="negativeMark" class="form-control" value="1"
 					required>
 			</div>
 
@@ -51,28 +51,34 @@
 	</div>
 
 
-<div class="container mt-3">
+	<div class="container mt-3">
 
-    <!-- Success Message -->
-    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-2"></i>
-        <span th:text="${success}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+		<!-- Success Message -->
+		<div th:if="${success}"
+			class="alert alert-success alert-dismissible fade show" role="alert">
+			<i class="fas fa-check-circle me-2"></i> <span th:text="${success}"></span>
+			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		</div>
 
-    <!-- Error Message -->
-    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        <span th:text="${error}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+		<!-- Error Message -->
+		<div th:if="${error}"
+			class="alert alert-danger alert-dismissible fade show" role="alert">
+			<i class="fas fa-exclamation-triangle me-2"></i> <span
+				th:text="${error}"></span>
+			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		</div>
 
-</div>
+	</div>
 
 	<!-- Upload Quiz Questions -->
 	<div class="container mt-4 shadow-sm p-4 rounded">
 
 		<h2 class="mb-4">Upload Quiz Questions (CSV)</h2>
+		<div class="alert alert-warning small">
+			<strong>CSV Rule:</strong><br> If any text (question or options)
+			contains commas (,), it <u>must</u> be enclosed in double quotes (
+			<code>" "</code>).
+		</div>
 
 		<form th:action="@{/admin/questions/upload}" method="post"
 			enctype="multipart/form-data">
@@ -96,9 +102,9 @@
 		<hr class="my-4">
 
 		<h3>CSV Format</h3>
-		<pre>
-				quizType,section,questionText,optionA,optionB,optionC,optionD,correctAnswer,marks,negativeMarks
-				Quiz 1,QUANT,"What is 2,000 + 3,000?",4000,4500,5000,5500,C,1,0.25
+		<pre>quizType,section,questionText,optionA,optionB,optionC,optionD,correctAnswer,marks,negativeMarks
+Quiz 1,QUANT,"What is 2,000 + 3,000?","3,500","4,000","5,000","5,500",C,1,0.25
+
 		</pre>
 	</div>
 

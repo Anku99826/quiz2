@@ -4,7 +4,7 @@
 <title>Online Examination</title>
 <link rel="stylesheet" th:href="@{/css/local/quizPage.css}">
 </head>
-<h1 style="color:red">TEMPLATE VERSION 123</h1>
+
 
 <body>
 
@@ -19,7 +19,8 @@
 		<!-- LEFT PANEL -->
 		<div class="question-panel">
 
-			<form id="examForm" method="post" action="/exam/save" style="height: 100%; display: flex; flex-direction: column;">
+			<form id="examForm" method="post" action="/exam/save"
+				style="height: 100%; display: flex; flex-direction: column;">
 
 
 				<!-- SCROLLABLE CONTENT -->
@@ -52,7 +53,7 @@
 
 				<!-- FOOTER (LEFT PANEL) -->
 				<div class="panel-footer">
-					
+
 
 					<div class="buttons-row">
 						<button type="submit" name="action" value="clear"
@@ -61,7 +62,8 @@
 						<button type="submit" name="action" value="next" class="btn save">
 							Save & Next</button>
 					</div>
-					<div class="note">Note: Please save before jumping to next question else the answer will not be saved!</div>
+					<div class="note">Note: Please save before jumping to next
+						question else the answer will not be saved!</div>
 				</div>
 
 
@@ -77,11 +79,9 @@
 				<div class="palette-header">Question Palette</div>
 
 				<div class="palette">
-	<a th:each="i : ${#numbers.sequence(0, total-1)}"
-   th:href="@{/exam/question(n=${i})}"
-   th:text="${i + 1}"
-   th:class="${paletteClasses[i]}">
-</a>
+					<a th:each="i : ${#numbers.sequence(0, total-1)}"
+						th:href="@{/exam/question(n=${i})}" th:text="${i + 1}"
+						th:class="${paletteClasses[i]}"> </a>
 
 				</div>
 			</div>
@@ -97,9 +97,6 @@
 					</div>
 					<div>
 						<span class="box attempted"></span> Attempted
-					</div>
-					<div>
-						<span class="box review"></span> Marked for Review
 					</div>
 				</div>
 

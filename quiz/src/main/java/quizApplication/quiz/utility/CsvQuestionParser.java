@@ -1,14 +1,17 @@
 package quizApplication.quiz.utility;
 
-import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 
 import quizApplication.quiz.entity.Question;
 
@@ -19,36 +22,58 @@ public class CsvQuestionParser {
 
         List<Question> questions = new ArrayList<>();
 
-        try (CSVReader reader =
-                 new CSVReader(new InputStreamReader(file.getInputStream()))) {
+        CSVParser parser = new CSVParserBuilder()
+                .withSeparator(',')     // standard CSV
+                .withQuoteChar('"')     // IMPORTANT: handles commas inside quotes
+                .build();
+
+        try (CSVReader reader = new CSVReaderBuilder(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))
+                .withCSVParser(parser)
+                .build()) {
 
             String[] data;
-            boolean firstLine = true;
+            int rowNumber = 0;
 
             while ((data = reader.readNext()) != null) {
+                rowNumber++;
 
-                if (firstLine) {
-                    firstLine = false;
-                    continue;
+                // Skip header
+                if (rowNumber == 1) continue;
+
+                if (data.length != 10) {
+                    throw new RuntimeException(
+                        "Invalid CSV format at row " + rowNumber +
+                        ". Expected 10 columns but found " + data.length
+                    );
                 }
-
-                if (data.length < 10) {
-                    throw new RuntimeException("Invalid CSV row: " + String.join(",", data));
-                }
-
                 Question q = new Question();
-                q.setQuizType(data[0].trim());
-                q.setSection(data[1].trim());
-                q.setQuestionText(data[2].trim());
-                q.setOptionA(data[3].trim());
-                q.setOptionB(data[4].trim());
-                q.setOptionC(data[5].trim());
-                q.setOptionD(data[6].trim());
-                q.setCorrectAnswer(data[7].trim());
-                q.setMarks(Integer.parseInt(data[8].trim()));
-                q.setNegativeMarks(Double.parseDouble(data[9].trim()));
-                
+
+                try {
+                    q.setQuizType(data[0].trim());
+                    q.setSection(data[1].trim());
+                    q.setQuestionText(data[2].trim());
+                    q.setOptionA(data[3].trim());
+                    q.setOptionB(data[4].trim());
+                    q.setOptionC(data[5].trim());
+                    q.setOptionD(data[6].trim());
+
+                    String correct = data[7].trim();
+                    if (!List.of("A","B","C","D").contains(correct)) {
+                        throw new RuntimeException("Correct answer must be A/B/C/D");
+                    }
+                    q.setCorrectAnswer(correct);
+
+                    q.setMarks(Integer.parseInt(data[8].trim()));
+                    q.setNegativeMarks(Double.parseDouble(data[9].trim()));
+
+                } catch (Exception e) {
+                    q.setValid(false);
+                    q.setErrorMessage(e.getMessage());
+                }
+
                 questions.add(q);
+
             }
         }
 

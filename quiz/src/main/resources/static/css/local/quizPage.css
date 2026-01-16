@@ -85,7 +85,7 @@ html, body {
 
     position: sticky;
     bottom: 0;
-
+	
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -168,10 +168,6 @@ html, body {
     color: white;
 }
 
-.palette a.review {
-    background: #ff9800;
-    color: white;
-}
 
 /* current question highlight */
 .palette a.current {
@@ -234,7 +230,7 @@ html, body {
 .box.not_visited { background: lightgrey; }
 .box.visited { background: #2196f3; }
 .box.attempted { background: #4caf50; }
-.box.review { background: #ff9800; }
+
 
 
 
