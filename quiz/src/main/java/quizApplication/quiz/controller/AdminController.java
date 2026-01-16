@@ -182,9 +182,9 @@ public class AdminController {
 	
     
     //RESULT
-    @GetMapping("/results")
+    @GetMapping("/reports")
     public String viewResult() {
-    	return "result";
+    	return "report";
     }
     
 }

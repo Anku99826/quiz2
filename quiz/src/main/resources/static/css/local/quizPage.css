@@ -78,23 +78,19 @@ html, body {
     margin-right: 10px;
 }
 
-/* PANEL FOOTER (STICKY) */
 .panel-footer {
     border-top: 1px solid #ddd;
-    padding: 10px;
+    padding: 10px 15px;
     background: white;
+
     position: sticky;
     bottom: 0;
-    text-align: center;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
-/* Make buttons smaller and side by side */
-.panel-footer .btn {
-    padding: 10px 10px;      /* smaller padding */
-    font-size: 13px;        /* slightly smaller text */
-    width: auto;            /* don't stretch full width */
-    min-width: 100px;       /* optional minimum width */
-    margin-right: 10px;     /* space between buttons */
-}
+
 
 /* Optional: remove margin for last button */
 .panel-footer .btn:last-child {

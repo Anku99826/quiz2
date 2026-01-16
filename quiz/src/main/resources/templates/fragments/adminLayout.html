@@ -1,18 +1,6 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-<meta charset="UTF-8">
-<title>Admin Dashboard</title>
-<link rel="stylesheet" th:href="@{/css/local/adminDashboard.css}">
-<link rel="stylesheet" href="/css/bootstrap.min.css">
-<link rel="stylesheet" href="/css/styles.css">
-<link rel="stylesheet" href="/css/all.min.css">
-<script src="/js/bootstrap.bundle.min.js" defer></script>
-</head>
-<body>
 
-	<!-- Logout Modal -->
+<div th:fragment="adminLayout">
+<!-- Logout Modal -->
 	<div class="modal fade" id="logoutModal" tabindex="-1">
 		<div class="modal-dialog modal-dialog-centered">
 			<div class="modal-content">
@@ -61,7 +49,7 @@
 					<li class="nav-item"><a class="nav-link"
 						href="/admin/questions/upload">Upload Questions</a></li>
 							<li class="nav-item"><a class="nav-link"
-						href="/admin/dashboard">Results</a></li>
+						href="/admin/reports">Reports</a></li>
 				</ul>
 
 				<form class="d-flex me-2" role="search">
@@ -82,6 +70,5 @@
 			</div>
 		</div>
 	</nav>
-<!-- Page Content -->
-</body>
-</html>
+	
+	</div>
