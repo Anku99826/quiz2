@@ -22,11 +22,18 @@
 		<form method="post" action="/exam/begin">
 			<label>Select Type :</label> <select name="quizType" required>
 				<option value="">-- Select --</option>
-				<option th:each="quiz : ${quizTypes}" th:value="${quiz.title}"
-					th:text="${quiz.title}"></option>
+				<option th:each="quiz : ${quizTypes}"
+        th:value="${quiz.title}"
+        th:text="${quiz.title}"
+        th:disabled="${!quiz.active}">
+</option>
+
 			</select>
 			<div>
 
+				<div th:if="${error}" class="alert alert-danger">
+					<span th:text="${error}"></span>
+				</div>
 
 				<h2>General Instructions</h2>
 

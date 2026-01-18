@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -22,8 +23,10 @@ import jakarta.servlet.http.HttpSession;
 import quizApplication.quiz.entity.ExamAttempt;
 import quizApplication.quiz.entity.Question;
 import quizApplication.quiz.entity.QuestionStatus;
+import quizApplication.quiz.entity.Quiz;
 import quizApplication.quiz.repository.ExamAttemptRepository;
 import quizApplication.quiz.repository.QuestionRepository;
+import quizApplication.quiz.repository.QuizRepository;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 @Controller
@@ -35,6 +38,7 @@ public class ExamController {
     private QuestionRepository questionRepo;
     @Autowired
     private ExamAttemptRepository examAttemptRepo;
+
     
     private static final long EXAM_DURATION_MS = 30 * 60 * 1000; // 30 mins
 
@@ -48,37 +52,32 @@ public class ExamController {
     public String startExam(@RequestParam String quizType,
                             HttpSession session,
                             RedirectAttributes redirectAttributes) {
-    	System.err.println("INSIDE EXAM BEGIN");
-    	if (session.getAttribute("EXAM_START_TIME") == null) {
-    	    session.setAttribute("EXAM_START_TIME", System.currentTimeMillis());
-    	}
+
+         
+        // 2. Fetch questions only if quiz is active
         List<Question> questions = questionRepo.findByQuizType(quizType);
-       
+
         if (questions == null || questions.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error",
-                    "No questions available for selected exam");
+            redirectAttributes.addFlashAttribute("error", "No questions available for selected exam");
             return "redirect:/user/dashboard";
         }
 
+        // 3. Set exam start time ONCE
+        session.setAttribute("EXAM_START_TIME", System.currentTimeMillis());
+
+        // 4. Initialize status map
         Map<Integer, QuestionStatus> statusMap = new HashMap<>();
         for (int i = 0; i < questions.size(); i++) {
             statusMap.put(i, QuestionStatus.NOT_VISITED);
         }
-        
-        if (session.getAttribute("EXAM_START_TIME") == null) {
-            session.setAttribute("EXAM_START_TIME", System.currentTimeMillis());
-        }
-        
-        session.setAttribute("statusMap", statusMap);
 
-
-
+        // 5. Store session attributes
         session.setAttribute("questions", questions);
         session.setAttribute("currentQuestion", 0);
         session.setAttribute("statusMap", statusMap);
-        session.setAttribute("answers", new HashMap<>());
+        session.setAttribute("answers", new HashMap<Integer, Integer>());
 
-          return "redirect:/exam/question";
+        return "redirect:/exam/question";
     }
 
 

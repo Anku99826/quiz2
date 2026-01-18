@@ -3,7 +3,7 @@
 	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>All Quizzes</title>
 <link rel="stylesheet" th:href="@{/css/local/adminDashboard.css}">
 <link rel="stylesheet" href="/css/bootstrap.min.css">
 <link rel="stylesheet" href="/css/styles.css">
@@ -24,6 +24,8 @@
                 <th>#</th>
                 <th>Quiz Title</th>
                 <th>Total Questions</th>
+                <th>Status</th>
+
             </tr>
         </thead>
      <tbody th:each="quiz, stat : ${quizzes}">
@@ -34,6 +36,16 @@
     <td th:text="${stat.index + 1}"></td>
     <td th:text="${quiz.title}"></td>
     <td th:text="${quiz.questions.size()}"></td>
+   <td>
+    <div class="form-check form-switch">
+        <input class="form-check-input"
+               type="checkbox"
+               th:checked="${quiz.active}"
+               th:data-id="${quiz.id}"
+               onchange="toggleQuiz(this)">
+    </div>
+</td>
+
 </tr>
 
 <tr th:id="'quiz-'+${quiz.id}" class="collapse">
@@ -45,12 +57,33 @@
             </tr>
         </table>
     </td>
+    <td></td>
 </tr>
 
 </tbody>
 
     </table>
 </div>
+<script >
+function toggleQuiz(element) {
+    const quizId = element.getAttribute("data-id");
 
+    fetch(`/admin/quiz/${quizId}/toggle`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => res.text())
+    .then(status => {
+        console.log("Quiz status:", status);
+    })
+    .catch(err => {
+        alert("Failed to update quiz status");
+        element.checked = !element.checked; // rollback UI
+    }
+	)
+	};
+</script>
 </body>
 </html>

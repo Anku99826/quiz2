@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.SessionStatus;
@@ -194,10 +195,7 @@ public class AdminController {
     public String listQuizzes(Model model) {
 		
         List<Quiz> quizzes = quizService.getAllQuizzes();
-        for (Quiz quiz : quizzes) {
-			System.err.println("insinde quiz admin controller");
-			System.err.println(quizzes.size());
-		}
+  
         model.addAttribute("quizzes", quizzes);
         model.addAttribute("quizCount", quizzes.size());
         return "quizzes"; 
@@ -212,6 +210,18 @@ public class AdminController {
         return "quiz-questions"; 
     }
 	
+    @PostMapping("/quiz/{id}/toggle")
+    @ResponseBody
+    public String toggleQuizStatus(@PathVariable Long id) {
+        Quiz quiz = quizRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+
+        quiz.setActive(!quiz.isActive());
+        quizRepository.save(quiz);
+
+        return quiz.isActive() ? "ACTIVE" : "INACTIVE";
+    }
+    
     
     //RESULT
     @GetMapping("/reports")
