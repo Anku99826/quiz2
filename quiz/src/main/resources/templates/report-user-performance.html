@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8">
+<title>User Performance Report</title>
+
+<link rel="stylesheet" th:href="@{/css/local/adminDashboard.css}">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/all.min.css">
+
+<script src="/js/bootstrap.bundle.min.js" defer></script>
+</head>
+
+<body>
+
+<div th:insert="fragments/adminLayout :: adminLayout">...</div>
+
+<div class="container mt-4">
+
+    <h3>User Performance</h3>
+
+    <div class="card shadow mt-3">
+        <div class="card-body p-0">
+
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>#</th>
+                        <th>Username</th>
+                        <th>Total Attempts</th>
+                        <th>Average Score</th>
+                        <th>Last Attempt</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody class="text-center">
+                    <tr th:each="u, stat : ${reports}">
+                        <td th:text="${stat.count}"></td>
+                        <td th:text="${u[0]}"></td>
+                        <td th:text="${u[1]}"></td>
+                        <td th:text="${#numbers.formatDecimal(u[2],1,2)}"></td>
+                        <td th:text="${#temporals.format(u[3],'dd-MM-yyyy HH:mm')}"></td>
+
+                        <!-- ✅ SAFE LINK -->
+                        <td>
+                            <a class="btn btn-sm btn-primary"
+                               th:href="@{/admin/reports/user/{username}(username=${u[0]})}">
+                                View Attempts
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(users)}">
+                        <td colspan="6" class="text-muted">
+                            No user performance data found
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+<a
+			href="/admin/reports" class="btn btn-outline-secondary mt-3"> ←
+			Back to Dashboard </a>
+
+</div>
+
+</body>
+</html>

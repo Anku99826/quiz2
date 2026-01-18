@@ -150,6 +150,7 @@ html, body {
     border: 1px solid #aaa;
     text-decoration: none;
     font-weight: bold;
+     position: relative;
 }
 
 /* PALETTE STATUS COLORS */
@@ -167,14 +168,31 @@ html, body {
     background: #4caf50;
     color: white;
 }
-
-
+.palette a.attempted.review {
+    background: #ff9800;       /* Orange box */
+    color: white;
+    border: 2px solid #ff9800;
+}
+.palette a.attempted.review::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #4caf50;       /* Green dot */
+    border-radius: 50%;
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+}
 /* current question highlight */
 .palette a.current {
     border: 2px solid red;
     box-shadow: 0 0 5px rgba(255,0,0,0.7);
 }
 
+.palette a.review {
+    background: #ff9800; /* ORANGE */
+    color: white;
+}
 
 /* LEGEND PANEL */
 .legend {
@@ -230,7 +248,9 @@ html, body {
 .box.not_visited { background: lightgrey; }
 .box.visited { background: #2196f3; }
 .box.attempted { background: #4caf50; }
-
+.box.review {
+    background: #ff9800;
+}
 
 
 
@@ -244,3 +264,7 @@ html, body {
 }
 
 
+.review-btn {
+    background: #ff9800;   /* Orange */
+    color: white;
+}

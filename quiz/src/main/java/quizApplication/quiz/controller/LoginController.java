@@ -169,6 +169,31 @@ public class LoginController {
 
 	        return "redirect:/user/dashboard";
 	    }
+	    
+	    else if ("test2".equals(username) && "test2".equals(password)) {
+
+	        UsernamePasswordAuthenticationToken auth =
+	                new UsernamePasswordAuthenticationToken(
+	                        username,
+	                        null,
+	                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+	                );
+
+	        SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(auth);
+
+            SecurityContextHolder.setContext(context);
+
+            request.getSession(true)
+                   .setAttribute(
+                       HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                       context
+                   );
+
+
+	        return "redirect:/user/dashboard";
+	    }
+	    
 
 	    model.addAttribute("error", "Invalid username or password");
 	    return "userLoginPage";

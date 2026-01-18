@@ -1,8 +1,9 @@
 package quizApplication.quiz.entity;
 
 public enum QuestionStatus {
-    NOT_VISITED,
-    VISITED,
-    ATTEMPTED,
-    REVIEW
+	   NOT_VISITED,
+	    VISITED,
+	    ATTEMPTED,
+	    REVIEW,
+	    ATTEMPTED_REVIEW
 }

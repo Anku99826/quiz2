@@ -59,9 +59,13 @@
 						<button type="submit" name="action" value="clear"
 							class="btn clear">Clear Response</button>
 
+						<button type="submit" name="action" value="review"
+							class="btn review-btn">Save & Mark for Review</button>
+
 						<button type="submit" name="action" value="next" class="btn save">
 							Save & Next</button>
 					</div>
+
 					<div class="note">Note: Please save before jumping to next
 						question else the answer will not be saved!</div>
 				</div>
@@ -98,7 +102,17 @@
 					<div>
 						<span class="box attempted"></span> Attempted
 					</div>
+					<div>
+						<span class="box review"></span> Marked for Review
+					</div>
+					<div>
+						<span class="box review"></span> <span
+							style="color: #4caf50; font-weight: bold;">●</span> Attempted &
+						Marked for Review
+					</div>
 				</div>
+
+
 
 				<form method="post" action="/exam/submit">
 					<button type="submit" class="btn submit">Submit Exam</button>

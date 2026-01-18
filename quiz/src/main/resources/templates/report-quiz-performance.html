@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8">
+<title>Quiz Performance Report</title>
+
+<link rel="stylesheet" th:href="@{/css/local/adminDashboard.css}">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/all.min.css">
+
+<script src="/js/bootstrap.bundle.min.js" defer></script>
+</head>
+
+<body>
+
+	<!-- Admin Layout -->
+	<div th:insert="fragments/adminLayout :: adminLayout">...</div>
+
+	<!-- Page Content -->
+	<div class="container mt-4">
+		<h3>Quiz Performance Report</h3>
+
+		<form method="get" class="row g-2 mt-3">
+			<div class="col-md-3">
+				<input type="text" name="quizType" placeholder="Quiz Type"
+					class="form-control" th:value="${selectedQuiz}">
+			</div>
+
+			<div class="col-md-3">
+				<input type="date" name="fromDate" class="form-control">
+			</div>
+
+			<div class="col-md-3">
+				<input type="date" name="toDate" class="form-control">
+			</div>
+
+			<div class="col-md-3">
+				<button class="btn btn-primary w-100">Filter</button>
+			</div>
+		</form>
+
+		<table class="table table-bordered table-hover mt-4">
+			<thead class="table-dark text-center">
+				<tr>
+					<th>Quiz</th>
+					<th>Attempts</th>
+					<th>Avg</th>
+					<th>Max</th>
+					<th>Min</th>
+				</tr>
+			</thead>
+			<tbody class="text-center">
+				<tr th:each="r : ${reports}">
+					<td th:text="${r[0]}"></td>
+					<td th:text="${r[1]}"></td>
+					<td th:text="${#numbers.formatDecimal(r[2],1,2)}"></td>
+					<td th:text="${r[3]}"></td>
+					<td th:text="${r[4]}"></td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(reports)}">
+					<td colspan="5" class="text-muted text-center">No quiz
+						performance data found</td>
+				</tr>
+
+			</tbody>
+		</table>
+
+		<a
+			th:href="@{/admin/report/export/quiz-performance(
+      			quizType=${selectedQuiz},
+      			fromDate=${param.fromDate},
+      			toDate=${param.toDate})}"
+			class="btn btn-success"> Export CSV 
+		</a> 
+		<a href="/admin/reports"
+			class="btn btn-outline-secondary mt-3"> ← Back to Dashboard 
+		</a>
+	</div>
+
+</body>
+</html>

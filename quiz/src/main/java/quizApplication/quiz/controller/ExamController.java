@@ -4,9 +4,9 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -23,10 +23,8 @@ import jakarta.servlet.http.HttpSession;
 import quizApplication.quiz.entity.ExamAttempt;
 import quizApplication.quiz.entity.Question;
 import quizApplication.quiz.entity.QuestionStatus;
-import quizApplication.quiz.entity.Quiz;
 import quizApplication.quiz.repository.ExamAttemptRepository;
 import quizApplication.quiz.repository.QuestionRepository;
-import quizApplication.quiz.repository.QuizRepository;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 @Controller
@@ -92,7 +90,7 @@ public class ExamController {
     public String question(@RequestParam(required = false) Integer n,
                            Model model,
                            HttpSession session) {
-    	
+
         List<Question> questions =
                 (List<Question>) session.getAttribute("questions");
 
@@ -115,11 +113,10 @@ public class ExamController {
         model.addAttribute("remainingSeconds", remainingMillis / 1000);
 
         int index = (n != null) ? n : (int) session.getAttribute("currentQuestion");
-
         index = Math.max(0, Math.min(index, questions.size() - 1));
         session.setAttribute("currentQuestion", index);
 
-    
+        // ---------------- STATUS MAP ----------------
         Map<Integer, QuestionStatus> statusMap =
                 (Map<Integer, QuestionStatus>) session.getAttribute("statusMap");
 
@@ -127,35 +124,65 @@ public class ExamController {
             statusMap = new HashMap<>();
         }
 
+        // ---------------- ANSWERS ----------------
         Map<Integer, String> answers =
                 (Map<Integer, String>) session.getAttribute("answers");
 
         String selectedAnswer = answers != null ? answers.get(index) : null;
         model.addAttribute("selectedAnswer", selectedAnswer);
 
-  
-        QuestionStatus current = statusMap.get(index);
-        if (current == null || current == QuestionStatus.NOT_VISITED) {
+        // ---------------- MARK VISITED ----------------
+        QuestionStatus currentStatus = statusMap.get(index);
+        if (currentStatus == null || currentStatus == QuestionStatus.NOT_VISITED) {
             statusMap.put(index, QuestionStatus.VISITED);
         }
+
+        // ---------------- BUILD PALETTE CLASSES ----------------
         List<String> paletteClasses = new ArrayList<>();
 
-    	for (int i = 0; i < questions.size(); i++) {
-    	    QuestionStatus s = statusMap.get(i);
-    	    paletteClasses.add(
-    	        s == null ? "not_visited" : s.name().toLowerCase()
-    	    );
-    	}
+        for (int i = 0; i < questions.size(); i++) {
 
-    	model.addAttribute("paletteClasses", paletteClasses);
+            QuestionStatus s = statusMap.get(i);
+            String cssClass = "not_visited";
 
+            if (s != null) {
+                switch (s) {
+                    case VISITED:
+                        cssClass = "visited";
+                        break;
+                    case ATTEMPTED:
+                        cssClass = "attempted";
+                        break;
+                    case REVIEW:
+                        cssClass = "review";
+                        break;
+                    case ATTEMPTED_REVIEW:
+                        cssClass = "attempted review"; 
+                        break;
+                    default:
+                        cssClass = "not_visited";
+                }
+            }
+
+            // highlight current question
+            if (i == index) {
+                cssClass += " current";
+            }
+
+            paletteClasses.add(cssClass);
+        }
+
+        // ---------------- MODEL + SESSION ----------------
         session.setAttribute("statusMap", statusMap);
 
+        model.addAttribute("paletteClasses", paletteClasses);
         model.addAttribute("question", questions.get(index));
         model.addAttribute("index", index);
         model.addAttribute("total", questions.size());
         model.addAttribute("statusMap", statusMap);
+
         System.out.println("STATUS MAP = " + statusMap);
+
         return "quizPage";
     }
 
@@ -180,23 +207,32 @@ public class ExamController {
 
         List<Question> questions =
                 (List<Question>) session.getAttribute("questions");
-
-        // ===== CLEAR =====
+     // ===== CLEAR =====
         if ("clear".equals(action)) {
             answers.remove(index);
             statusMap.put(index, QuestionStatus.VISITED);
         }
 
-        // ===== SAVE / REVIEW =====
-        if (answer != null && !"clear".equals(action)) {
-            answers.put(index, answer);
-
-            if ("review".equals(action)) {
-                statusMap.put(index, QuestionStatus.REVIEW);
-            } else {
+        // ===== SAVE & NEXT =====
+        else if ("next".equals(action)) {
+            if (answer != null) {
+                answers.put(index, answer);
                 statusMap.put(index, QuestionStatus.ATTEMPTED);
+            } else {
+                statusMap.put(index, QuestionStatus.VISITED);
             }
         }
+
+        // ===== SAVE & MARK FOR REVIEW =====
+        else if ("review".equals(action)) {
+            if (answer != null) {
+                answers.put(index, answer);
+                statusMap.put(index, QuestionStatus.ATTEMPTED_REVIEW);
+            } else {
+                statusMap.put(index, QuestionStatus.REVIEW);
+            }
+        }
+
 
         // Store back in session
         session.setAttribute("answers", answers);
@@ -210,19 +246,14 @@ public class ExamController {
         }
 
         // ===== NAVIGATION =====
-        int nextIndex = index;
-
-        if ("next".equals(action) || "review".equals(action)) {
-            nextIndex++;
-        }
-
+        int nextIndex = index + 1;
         if (nextIndex >= questions.size()) {
             nextIndex = questions.size() - 1;
         }
 
         session.setAttribute("currentQuestion", nextIndex);
-
         return "redirect:/exam/question?n=" + nextIndex;
+
     }
 
 
@@ -237,17 +268,18 @@ public class ExamController {
 
         Map<Integer, String> answers =
                 (Map<Integer, String>) session.getAttribute("answers");
-
+        
+        Map<Integer, String> answersOneBased = new LinkedHashMap<>();
+        for (Map.Entry<Integer, String> entry : answers.entrySet()) {
+            answersOneBased.put(entry.getKey() + 1, entry.getValue());
+        }
+        
         Map<Integer, QuestionStatus> statusMap =
                 (Map<Integer, QuestionStatus>) session.getAttribute("statusMap");
 
         int total = questions.size();
         int attempted = answers.size();
-        int unattempted = total - attempted;
 
-        long markedForReview = statusMap.values().stream()
-                .filter(s -> s == QuestionStatus.REVIEW)
-                .count();
 
         int score = 0;
         for (int i = 0; i < total; i++) {
@@ -265,7 +297,7 @@ public class ExamController {
         attempt.setQuizType(questions.get(0).getQuizType());
         attempt.setScore(score);
         attempt.setSubmittedAt(LocalDateTime.now());
-        attempt.setAnswersJson(mapper.writeValueAsString(answers)); 
+        attempt.setAnswersJson(mapper.writeValueAsString(answersOneBased)); 
         examAttemptRepo.save(attempt);
 
         return "redirect:/exam/summary";

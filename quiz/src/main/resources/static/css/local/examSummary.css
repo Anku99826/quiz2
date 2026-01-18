@@ -1,65 +1,104 @@
-/* RESET + BASE */
-html, body {
-    height: 100%;
+body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6f9;
 }
 
-/* CONTAINER */
-.summary-container {
-    max-width: 600px;
-    margin: 50px auto;
+.summary-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.summary-card {
     background: white;
-    border: 1px solid #ccc;
-    padding: 30px 25px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    border-radius: 6px;
+    width: 520px;
+    padding: 30px 35px;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
 }
 
-/* HEADER */
-.summary-container h2 {
+.thankyou-message {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 15px;
+    border-radius: 6px;
     text-align: center;
-    color: #003366;
+    font-weight: 600;
     margin-bottom: 20px;
 }
 
-/* INFO ROWS */
-.summary-container p {
-    font-size: 15px;
-    margin: 8px 0;
+.thankyou-message .sub-text {
+    font-weight: normal;
+    font-size: 14px;
 }
 
-.summary-container b {
-    color: #003366;
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
 }
 
-/* BUTTONS */
+.summary-grid {
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.row:last-child {
+    border-bottom: none;
+}
+
+.label {
+    color: #555;
+    font-weight: 500;
+}
+
+.value {
+    font-weight: 600;
+}
+
+.attempted .value {
+    color: #2e7d32;
+}
+
+.unattempted .value {
+    color: #d32f2f;
+}
+
+.review .value {
+    color: #ff9800;
+}
+
+.note {
+    margin-top: 15px;
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+}
+
 .actions {
     text-align: center;
     margin-top: 25px;
 }
 
-.actions .btn {
-    padding: 8px 16px;
-    font-size: 14px;
-    border: none;
-    cursor: pointer;
-    background: #003366;
-    color: white;
+.home-btn {
     text-decoration: none;
-    border-radius: 4px;
+    padding: 10px 25px;
+    background: #1976d2;
+    color: white;
+    border-radius: 5px;
+    font-weight: 600;
     transition: background 0.3s;
 }
 
-.actions .btn:hover {
-    background: #0055aa;
-}
-/* Thank you message styling */
-.thankyou-message {
-    text-align: center;
-    font-size: 14px;
-    color: #ff9800; /* highlight color like your review status */
-    margin-bottom: 20px;
-    font-weight: bold;
+.home-btn:hover {
+    background: #125aa3;
 }

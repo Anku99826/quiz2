@@ -1,47 +1,66 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<title>Exam Summary</title>
-<link rel="stylesheet" th:href="@{/css/local/examSummary.css}">
+    <title>Exam Summary</title>
+    <link rel="stylesheet" th:href="@{/css/local/examSummary.css}">
 </head>
 <body>
 
-	<div class="summary-container">
- <div class="thankyou-message">
-        Thank you for appearing. Results will be declared soon.
-    </div>
-    <h2>Exam Summary</h2>
+<div class="summary-wrapper">
 
-   
+    <div class="summary-card">
 
-    <p>
-        <b>Candidate Name:</b> <span th:text="${candidateName}"></span>
-    </p>
-    <p>
-        <b>Exam Type:</b> <span th:text="${examType}"></span>
-    </p>
-    <p>
-        <b>Total Questions:</b> <span th:text="${total}"></span>
-    </p>
-    <p>
-        <b>Attempted:</b> <span th:text="${attempted}"></span>
-    </p>
-    <p>
-        <b>Unattempted:</b> <span th:text="${unattempted}"></span>
-    </p>
-    <p>
-        <b>Marked for Review:</b> <span th:text="${review}"></span>
-    </p>
-    <p>
-        <b>Score:</b> <span th:text="${score}"></span>
-    </p>
+        <div class="thankyou-message">
+            Thank you for appearing in the examination.
+            <br>
+            <span class="sub-text">Your responses have been successfully submitted.</span>
+        </div>
 
-    <div class="actions">
-        <a href="/exam/home" class="btn home">Home</a>
+        <h2>Exam Summary</h2>
+
+        <div class="summary-grid">
+            <div class="row">
+                <span class="label">Candidate Name</span>
+                <span class="value" th:text="${candidateName}"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Exam Type</span>
+                <span class="value" th:text="${examType}"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Total Questions</span>
+                <span class="value" th:text="${total}"></span>
+            </div>
+
+            <div class="row attempted">
+                <span class="label">Attempted</span>
+                <span class="value" th:text="${attempted}"></span>
+            </div>
+
+            <div class="row unattempted">
+                <span class="label">Unattempted</span>
+                <span class="value" th:text="${unattempted}"></span>
+            </div>
+
+            <div class="row review">
+                <span class="label">Marked for Review</span>
+                <span class="value" th:text="${review}"></span>
+            </div>
+        </div>
+
+        <div class="note">
+            ⚠ Score will be calculated and published by the administrator.
+        </div>
+
+        <div class="actions">
+            <a href="/exam/home" class="btn home-btn">Go to Home</a>
+        </div>
+
     </div>
 
 </div>
-
 
 </body>
 </html>

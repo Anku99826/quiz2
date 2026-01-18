@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8">
+<title>User Attempt Details</title>
+
+<link rel="stylesheet" th:href="@{/css/local/adminDashboard.css}">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/all.min.css">
+
+<script src="/js/bootstrap.bundle.min.js" defer></script>
+</head>
+
+<body>
+
+    <!-- Admin Layout -->
+    <div th:insert="fragments/adminLayout :: adminLayout">...</div>
+
+    <!-- Page Content -->
+    <div class="container mt-4">
+
+        <div class="d-flex justify-content-between align-items-center">
+            <h3>User Attempt Details</h3>
+
+            <a href="/admin/reports/user-performance"
+               class="btn btn-outline-secondary">
+                ← Back
+            </a>
+        </div>
+
+        <div class="card shadow mt-3">
+            <div class="card-body p-0">
+
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th>#</th>
+                            <th>Username</th>
+                            <th>Quiz Type</th>
+                            <th>Score</th>
+                            <th>Submitted At</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="text-center">
+                        <tr th:each="a, stat : ${attempts}">
+                            <td th:text="${stat.count}"></td>
+                            <td th:text="${a.username}"></td>
+                            <td th:text="${a.quizType}"></td>
+                            <td th:text="${a.score}"></td>
+                            <td th:text="${#temporals.format(a.submittedAt,'dd-MM-yyyy HH:mm')}"></td>
+                            <td><a class="btn btn-sm btn-primary" th:href="@{/admin/reports/attempt/{id}(id=${a.id})}">View Answers</a></td>
+                            
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(attempts)}">
+                            <td colspan="5" class="text-muted">
+                                No attempts found for this user
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+			 <a
+			href="/admin/reports/user-performance" class="btn btn-outline-secondary mt-3"> ←
+			Back to User Performance </a>
+    </div>
+
+</body>
+</html>

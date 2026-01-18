@@ -14,7 +14,6 @@ import lombok.Setter;
 import java.util.List;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 @Entity
 @Getter
@@ -26,9 +25,10 @@ public class Quiz {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column( nullable = false, unique = true)
+    private String quizCode;
     private String title;
-
+    
     // Exam duration in minutes
     private int timeLimit;
 
