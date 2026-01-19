@@ -67,16 +67,16 @@
 			</tbody>
 		</table>
 
-		<a
-			th:href="@{/admin/report/export/quiz-performance(
-      			quizType=${selectedQuiz},
-      			fromDate=${param.fromDate},
-      			toDate=${param.toDate})}"
-			class="btn btn-success"> Export CSV 
-		</a> 
-		<a href="/admin/reports"
-			class="btn btn-outline-secondary mt-3"> ← Back to Dashboard 
-		</a>
+		<div class="mt-3 d-flex gap-2">
+			<a
+				th:href="@{/admin/report/export/quiz-performance(
+            quizType=${selectedQuiz},
+            fromDate=${param.fromDate},
+            toDate=${param.toDate})}"
+				class="btn btn-success"> Export CSV </a> <a href="/admin/reports"
+				class="btn btn-outline-secondary"> ← Back to Dashboard </a>
+		</div>
+
 	</div>
 
 </body>

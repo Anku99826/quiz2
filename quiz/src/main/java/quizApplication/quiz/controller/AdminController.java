@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,14 @@ import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.lowagie.text.Chunk;
+import com.lowagie.text.Document;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfWriter;
 
 import jakarta.servlet.http.HttpServletResponse;
 import quizApplication.quiz.entity.ExamAttempt;
@@ -106,32 +116,59 @@ public class AdminController {
 	}
 
 	@PostMapping("/questions/upload")
-	public String uploadCsv(@RequestParam("file") MultipartFile file, @RequestParam("quizId") Long quizId, Model model,
-			RedirectAttributes redirectAttributes) {
+	public String uploadCsv(
+	        @RequestParam("file") MultipartFile file,
+	        @RequestParam("quizId") Long quizId,
+	        Model model,
+	        RedirectAttributes redirectAttributes) {
 
-		try {
-			if (file.isEmpty()) {
-				redirectAttributes.addFlashAttribute("error", "Please upload a CSV file");
-				return "redirect:/admin/questions/upload";
-			}
+	    try {
+	        if (file.isEmpty()) {
+	            redirectAttributes.addFlashAttribute("error", "Please upload a CSV file");
+	            return "redirect:/admin/questions/upload";
+	        }
 
-			Quiz quiz = quizRepository.findById(quizId).orElseThrow(() -> new RuntimeException("Quiz not found"));
+	        // Fetch selected quiz
+	        Quiz quiz = quizRepository.findById(quizId)
+	                .orElseThrow(() -> new RuntimeException("Quiz not found"));
 
-			List<Question> questions = csvParser.parse(file);
+	        List<Question> questions = csvParser.parse(file);
 
-			// Attach quiz but DO NOT SAVE
-			questions.forEach(q -> q.setQuiz(quiz));
+	        if (questions.isEmpty()) {
+	            redirectAttributes.addFlashAttribute("error", "CSV file is empty");
+	            return "redirect:/admin/questions/upload";
+	        }
 
-			model.addAttribute("previewQuestions", questions);
-			model.addAttribute("quiz", quiz);
+	        // ✅ VALIDATE quizType in CSV matches selected quiz
+	        String selectedQuizType = quiz.getTitle().trim();
+	        for (int i = 0; i < questions.size(); i++) {
+	            Question q = questions.get(i);
+	            if (!selectedQuizType.equalsIgnoreCase(q.getQuizType().trim())) {
+	                redirectAttributes.addFlashAttribute(
+	                    "error",
+	                    "Quiz Type mismatch at row " + (i + 1) +
+	                    "! Selected Quiz: '" + selectedQuizType +
+	                    "', CSV contains: '" + q.getQuizType() + "'"
+	                );
+	                return "redirect:/admin/questions/upload";
+	            }
+	        }
 
-			return "admin-question-preview"; // preview page
+	        // Attach quiz AFTER validation
+	        questions.forEach(q -> q.setQuiz(quiz));
 
-		} catch (Exception e) {
-			redirectAttributes.addFlashAttribute("error", "CSV upload failed: " + e.getMessage());
-			return "redirect:/admin/questions/upload";
-		}
+	        // Send to preview page
+	        model.addAttribute("previewQuestions", questions);
+	        model.addAttribute("quiz", quiz);
+
+	        return "admin-question-preview";
+
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "CSV upload failed: " + e.getMessage());
+	        return "redirect:/admin/questions/upload";
+	    }
 	}
+
 
 	@PostMapping("/questions/upload/confirm")
 	public String confirmUpload(@SessionAttribute("previewQuestions") List<Question> questions,
@@ -158,16 +195,32 @@ public class AdminController {
 		return "admin-question-preview";
 	}
 
+	// download sample
+	@GetMapping("/questions/template")
+	public void downloadCsvTemplate(HttpServletResponse response) throws IOException {
+
+		response.setContentType("text/csv");
+		response.setHeader("Content-Disposition", "attachment; filename=quiz_questions_template.csv");
+
+		PrintWriter writer = response.getWriter();
+
+		writer.println("quizType,section,questionText,optionA,optionB,optionC,optionD,correctAnswer,marks");
+		writer.println("Quiz 1,QUANT,\"What is 2,000 + 3,000?\",\"3,500\",\"4,000\",\"5,000\",\"5,500\",C,1");
+
+		writer.flush();
+		writer.close();
+	}
+
 	// QUIZ
 
 	@PostMapping("/quiz/create")
-	public String createQuiz(@RequestParam String title, @RequestParam int timeLimit, @RequestParam double negativeMark,
-			@RequestParam int totalMarks, RedirectAttributes redirectAttributes) {
+	public String createQuiz(@RequestParam String title, @RequestParam int timeLimit, @RequestParam int totalMarks,
+			RedirectAttributes redirectAttributes) {
 
 		Quiz quiz = new Quiz();
 		quiz.setTitle(title);
 		quiz.setTimeLimit(timeLimit);
-		quiz.setNegativeMark(negativeMark);
+
 		quiz.setTotalMarks(totalMarks);
 		quiz.setActive(true);
 
@@ -209,50 +262,48 @@ public class AdminController {
 	}
 
 	// REPORTS
-	
+
 	@GetMapping("/reports")
 	public String viewReports(Model model) {
+		 long totalQuizzes = quizService.countAllQuizzes();
+		 
+		 
+		
 		model.addAttribute("totalAttempts", examAttemptRepo.totalAttempts());
-
+		model.addAttribute("totalQuizzes", totalQuizzes);
 		model.addAttribute("averageScore", examAttemptRepo.averageScore());
+		
 
 		return "report";
 	}
-	
+
 	@GetMapping("/reports/attempt/{id}")
 	public String attemptDetails(@PathVariable Long id, Model model) throws Exception {
 
-	    ExamAttempt attempt =
-	            examAttemptRepo.findById(id).orElseThrow();
+		ExamAttempt attempt = examAttemptRepo.findById(id).orElseThrow();
 
-	    ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = new ObjectMapper();
 
+		Map<String, String> rawAnswers = mapper.readValue(attempt.getAnswersJson(),
+				new TypeReference<Map<String, String>>() {
+				});
 
-	    Map<String, String> rawAnswers =
-	            mapper.readValue(
-	                attempt.getAnswersJson(),
-	                new TypeReference<Map<String, String>>() {}
-	            );
+		Map<Long, String> answers = new HashMap<>();
+		for (Map.Entry<String, String> e : rawAnswers.entrySet()) {
+			answers.put(Long.valueOf(e.getKey()), e.getValue());
+		}
 
-	    Map<Long, String> answers = new HashMap<>();
-	    for (Map.Entry<String, String> e : rawAnswers.entrySet()) {
-	        answers.put(Long.valueOf(e.getKey()), e.getValue());
-	    }
-	    
-	    List<Question> questions =
-	            questionRepo.findAllById(answers.keySet());
-	    
-	    System.err.println("INSIDE ATTEMPT DETAILS: "+ questions.size());
-	    
-	    model.addAttribute("attempt", attempt);
-	    model.addAttribute("questions", questions);
-	    model.addAttribute("answers", answers);
+		List<Question> questions = questionRepo.findAllById(answers.keySet());
 
-	    return "report-attempt-details";
+		System.err.println(attempt.getAnswersJson());
+
+		model.addAttribute("attempt", attempt);
+		model.addAttribute("questions", questions);
+		model.addAttribute("answers", answers);
+
+		return "report-attempt-details";
 	}
 
-
-	
 	@GetMapping("/reports/quiz-performance")
 	public String quizWiseReport(@RequestParam(required = false) String quizType,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
@@ -277,32 +328,122 @@ public class AdminController {
 
 		return "report-user-performance";
 	}
-	
-	
+
 	@GetMapping("/reports/user/{username}")
 	public String userAttempts(@PathVariable String username, Model model) {
-	    model.addAttribute("attempts",
-	        examAttemptRepo.findByUsername(username));
-	    return "report-user-attempts";
+		model.addAttribute("attempts", examAttemptRepo.findByUsername(username));
+		return "report-user-attempts";
 	}
-	
-	
+
 	@GetMapping("/report/export/quiz-performance")
-	public void exportQuizPerformance(  @RequestParam(required=false) String quizType,
-	        @RequestParam(required=false) @DateTimeFormat(iso = ISO.DATE) LocalDate fromDate,
-	        @RequestParam(required=false) @DateTimeFormat(iso = ISO.DATE) LocalDate toDate,
-	        HttpServletResponse response) throws IOException {
+	public void exportQuizPerformance(@RequestParam(required = false) String quizType,
+			@RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate fromDate,
+			@RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate toDate,
+			HttpServletResponse response) throws IOException {
 
-	    response.setContentType("text/csv");
-	    response.setHeader("Content-Disposition",
-	            "attachment; filename=quiz-performance.csv");
+		response.setContentType("text/csv");
+		response.setHeader("Content-Disposition", "attachment; filename=quiz-performance.csv");
 
-	    PrintWriter writer = response.getWriter();
-	    writer.println("Quiz,Attempts,Avg,Max,Min");
+		PrintWriter writer = response.getWriter();
+		writer.println("Quiz,Attempts,Avg,Max,Min");
 
-	    for (Object[] r : examAttemptRepo.quizPerformanceReport()) {
-	        writer.println(r[0] + "," + r[1] + "," + r[2] + "," + r[3] + "," + r[4]);
-	    }
+		for (Object[] r : examAttemptRepo.quizPerformanceReport()) {
+			writer.println(r[0] + "," + r[1] + "," + r[2] + "," + r[3] + "," + r[4]);
+		}
 	}
+	@GetMapping("/reports/attempt/{id}/pdf")
+	public void downloadAttemptPdf(@PathVariable Long id,
+	                               HttpServletResponse response) throws Exception {
+
+	    // 1️⃣ Fetch attempt
+	    ExamAttempt attempt = examAttemptRepo.findById(id)
+	            .orElseThrow(() -> new RuntimeException("Attempt not found"));
+
+	    // 2️⃣ Parse answers JSON (same logic as UI)
+	    ObjectMapper mapper = new ObjectMapper();
+
+	    Map<String, String> rawAnswers = mapper.readValue(
+	            attempt.getAnswersJson(),
+	            new TypeReference<Map<String, String>>() {}
+	    );
+
+	    Map<Long, String> answers = new HashMap<>();
+	    for (Map.Entry<String, String> e : rawAnswers.entrySet()) {
+	        answers.put(Long.valueOf(e.getKey()), e.getValue());
+	    }
+
+	    // 3️⃣ Fetch only attempted questions
+	    List<Question> questions = questionRepo.findAllById(answers.keySet());
+
+	    // 4️⃣ HTTP response config
+	    response.setContentType("application/pdf");
+	    response.setHeader("Content-Disposition",
+	            "attachment; filename=attempt-" + id + ".pdf");
+
+	    // 5️⃣ PDF setup
+	    Document document = new Document(PageSize.A4);
+	    PdfWriter.getInstance(document, response.getOutputStream());
+	    document.open();
+
+	    // 6️⃣ Fonts
+	    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+	    Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+	    Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+
+	    // 7️⃣ Title
+	    document.add(new Paragraph("Exam Attempt Report", titleFont));
+	    document.add(Chunk.NEWLINE);
+
+	    DateTimeFormatter formatter =
+	            DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+
+	    // 8️⃣ Attempt meta
+	    document.add(new Paragraph("User: " + attempt.getUsername(), normalFont));
+	    document.add(new Paragraph("Quiz: " + attempt.getQuizType(), normalFont));
+	    document.add(new Paragraph("Score: " + attempt.getScore(), normalFont));
+	    document.add(new Paragraph(
+	            "Submitted At: " + attempt.getSubmittedAt().format(formatter),
+	            normalFont));
+
+	    document.add(Chunk.NEWLINE);
+
+	    // 9️⃣ Questions
+	    int qNo = 1;
+
+	    for (Question q : questions) {
+
+	        String userAnswer = answers.get(q.getId());
+	        boolean correct =
+	                userAnswer != null && userAnswer.equals(q.getCorrectAnswer());
+
+	        document.add(new Paragraph(
+	                "Q" + qNo++ + ". " + q.getQuestionText(),
+	                headerFont));
+
+	        document.add(new Paragraph("A. " + q.getOptionA(), normalFont));
+	        document.add(new Paragraph("B. " + q.getOptionB(), normalFont));
+	        document.add(new Paragraph("C. " + q.getOptionC(), normalFont));
+	        document.add(new Paragraph("D. " + q.getOptionD(), normalFont));
+
+	        document.add(new Paragraph(
+	                "Your Answer: " +
+	                        (userAnswer != null ? userAnswer : "Not Answered"),
+	                normalFont));
+
+	        document.add(new Paragraph(
+	                "Correct Answer: " + q.getCorrectAnswer(),
+	                normalFont));
+
+	        document.add(new Paragraph(
+	                "Result: " + (correct ? "Correct" : "Wrong"),
+	                normalFont));
+
+	        document.add(Chunk.NEWLINE);
+	    }
+
+	    document.close();
+	}
+
 
 }
+

@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
+import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.persistence.*;
@@ -25,22 +25,20 @@ public class Quiz {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column( nullable = false, unique = true)
-    private String quizCode;
+
     private String title;
     
     // Exam duration in minutes
     private int timeLimit;
-
-    // Negative mark per wrong answer
-    private double negativeMark;
 
     // Total marks for the quiz
     private int totalMarks;
 
     // Whether quiz is visible to users
     private boolean active = true;
-
+    
+    private LocalDateTime startDate;
+    
     // One quiz → many questions
     @OneToMany(mappedBy = "quiz", fetch = FetchType.LAZY)
     private List<Question> questions;

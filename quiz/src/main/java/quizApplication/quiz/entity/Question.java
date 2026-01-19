@@ -39,8 +39,6 @@ public class Question {
     private String correctAnswer; // A/B/C/D
     @Column(nullable = false)
     private Integer marks;        // 1
-    @Column(precision = 4,  nullable = false)
-    private Double negativeMarks; // 0.25
 
     private Integer difficulty; 
     @ManyToOne

@@ -1,112 +1,116 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-<meta charset="UTF-8">
-<link rel="stylesheet" href="/css/local/admin-upolaod-questions.css">
-<link rel="stylesheet" href="/css/bootstrap.min.css">
-<link rel="stylesheet" href="/css/styles.css">
-<link rel="stylesheet" href="/css/all.min.css">
-<script src="/js/bootstrap.bundle.min.js" defer></script>
+    <meta charset="UTF-8">
+    <title>Create & Upload Quiz</title>
+    <link rel="stylesheet" href="/css/local/admin-upolaod-questions.css">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <script src="/js/bootstrap.bundle.min.js" defer></script>
 </head>
 
 <body>
-	<div th:insert="fragments/adminLayout :: adminLayout">...</div>
-	<!-- Create A new Quiz -->
-	<div class="container mt-4 shadow-sm p-4 rounded">
+    <!-- Admin Layout -->
+    <div th:insert="fragments/adminLayout :: adminLayout">...</div>
 
-		<h2 class="mb-3">Create New Quiz</h2>
+    <div class="container mt-4">
+        <div class="row g-4">
 
-		<form th:action="@{/admin/quiz/create}" method="post" class="row g-3">
+            <!-- Create Quiz Section -->
+            <div class="col-lg-6">
+                <div class="shadow-sm p-4 rounded">
+                    <h2 class="mb-3">Create New Quiz</h2>
 
-			<div class="col-md-6">
-				<label class="form-label">Quiz Type</label> <input type="text"
-					name="title" class="form-control" required>
-			</div>
+                    <form th:action="@{/admin/quiz/create}" method="post" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Quiz Type</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
 
-			<div class="col-md-3">
-				<label class="form-label">Time Limit (minutes)</label> <input
-					type="number" name="timeLimit" class="form-control" required>
-			</div>
+                        <div class="col-md-6">
+                            <label class="form-label">Time Limit (minutes)</label>
+                            <input type="number" name="timeLimit" class="form-control" required>
+                        </div>
 
-			<div class="col-md-3">
-				<label class="form-label">Total Marks</label> <input type="number"
-					name="totalMarks" class="form-control" required>
-			</div>
+                        <div class="col-md-6">
+                            <label class="form-label">Total Marks</label>
+                            <input type="number" name="totalMarks" class="form-control" required>
+                        </div>
 
-			<div class="col-md-4">
-				<label class="form-label">Negative Mark</label> <input type="number"
-					step="1" name="negativeMark" class="form-control" value="1"
-					required>
-			</div>
+                        <div class="col-md-6">
+                            <label class="form-label">Start Date & Time</label>
+                            <input type="datetime-local" name="startDate" class="form-control" required>
+                            <small class="text-muted">Set the date and time when the quiz will start.</small>
+                        </div>
 
-			<div class="col-md-12">
-				<button type="submit" class="btn btn-success">
-					<i class="fas fa-plus-circle me-2"></i>Create Quiz
-				</button>
-			</div>
+                        <div class="col-md-12 form-check mt-2">
+                            <input type="checkbox" name="active" class="form-check-input" checked>
+                            <label class="form-check-label">Active</label>
+                        </div>
 
-		</form>
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus-circle me-2"></i>Create Quiz
+                            </button>
+                        </div>
+                    </form>
 
-	</div>
+                    <!-- Success & Error Messages -->
+                    <div class="mt-3">
+                        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <span th:text="${success}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
 
+                        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <span th:text="${error}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-	<div class="container mt-3">
+            <!-- Upload Quiz Questions Section -->
+            <div class="col-lg-6">
+                <div class="shadow-sm p-4 rounded">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="mb-0">Upload Quiz Questions (CSV)</h2>
+                        <a href="/admin/questions/template" class="btn btn-outline-secondary">
+                            <i class="fas fa-download me-2"></i>Download CSV Template
+                        </a>
+                    </div>
 
-		<!-- Success Message -->
-		<div th:if="${success}"
-			class="alert alert-success alert-dismissible fade show" role="alert">
-			<i class="fas fa-check-circle me-2"></i> <span th:text="${success}"></span>
-			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-		</div>
+                    <div class="alert alert-warning small">
+                        <strong>CSV Rule:</strong><br>
+                        If any text (question or options) contains commas (,), it <u>must</u> be enclosed in double quotes (<code>" "</code>).<br>
+                        Selected Quiz must match <strong>quizType</strong> inside CSV.
+                    </div>
 
-		<!-- Error Message -->
-		<div th:if="${error}"
-			class="alert alert-danger alert-dismissible fade show" role="alert">
-			<i class="fas fa-exclamation-triangle me-2"></i> <span
-				th:text="${error}"></span>
-			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-		</div>
+                    <form th:action="@{/admin/questions/upload}" method="post" enctype="multipart/form-data">
+                        <label class="form-label">Select Quiz</label>
+                        <select name="quizId" class="form-select mb-3" required>
+                            <option value="">-- Select Quiz --</option>
+                            <option th:each="q : ${quizzes}" th:value="${q.id}" th:text="${q.title}"></option>
+                        </select>
 
-	</div>
+                        <input type="file" name="file" accept=".csv" class="form-control" required />
 
-	<!-- Upload Quiz Questions -->
-	<div class="container mt-4 shadow-sm p-4 rounded">
+                        <button type="submit" class="btn btn-primary mt-3">Upload CSV</button>
+                    </form>
 
-		<h2 class="mb-4">Upload Quiz Questions (CSV)</h2>
-		<div class="alert alert-warning small">
-			<strong>CSV Rule:</strong><br> If any text (question or options)
-			contains commas (,), it <u>must</u> be enclosed in double quotes (
-			<code>" "</code>).
-		</div>
-
-		<form th:action="@{/admin/questions/upload}" method="post"
-			enctype="multipart/form-data">
-
-			<label class="form-label">Select Quiz</label> <select name="quizId"
-				class="form-select mb-3" required>
-				<option value="">-- Select Quiz --</option>
-				<option th:each="q : ${quizzes}" th:value="${q.id}"
-					th:text="${q.title}"></option>
-			</select> <input type="file" name="file" accept=".csv" class="form-control"
-				required />
-
-			<button type="submit" class="btn btn-primary mt-3">Upload
-				CSV</button>
-
-		</form>
-
-	</div>
-
-	<div class="container mt-4 shadow-sm p-4 rounded">
-		<hr class="my-4">
-
-		<h3>CSV Format</h3>
-		<pre>quizType,section,questionText,optionA,optionB,optionC,optionD,correctAnswer,marks,negativeMarks
-Quiz 1,QUANT,"What is 2,000 + 3,000?","3,500","4,000","5,000","5,500",C,1,0.25
-
-		</pre>
-	</div>
-
+                    <hr class="my-4">
+                    <h3>CSV Format</h3>
+                    <pre>
+quizType,section,questionText,optionA,optionB,optionC,optionD,correctAnswer,marks
+Quiz 1,QUANT,"What is 2,000 + 3,000?","3,500","4,000","5,000","5,500",C,1
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

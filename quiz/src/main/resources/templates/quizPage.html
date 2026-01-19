@@ -30,6 +30,7 @@
 					<div class="question-text" th:text="${question.questionText}"></div>
 
 					<input type="hidden" name="index" th:value="${index}" />
+					<input type="hidden" name="questionId" th:value="${question.id}" />
 
 					<div class="options">
 						<label> <input type="radio" name="answer" value="A"
@@ -103,7 +104,7 @@
 						<span class="box review"></span> Marked for Review
 					</div>
 					<div>
-						<span class="box review"></span> <span
+						<span class="box attempted-review"></span> <span
 							style="color: #4caf50; font-weight: bold;">●</span> Attempted &
 						Marked for Review
 					</div>

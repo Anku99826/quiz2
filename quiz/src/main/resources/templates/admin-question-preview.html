@@ -23,7 +23,6 @@
 				<th>D</th>
 				<th>Correct</th>
 				<th>Marks</th>
-				<th>Negative</th>
 				<th>Error Message</th>
 				<th>Delete</th>
 			</tr>
@@ -43,7 +42,6 @@
 				<td th:text="${q.optionD}"></td>
 				<td th:text="${q.correctAnswer}"></td>
 				<td th:text="${q.marks}"></td>
-				<td th:text="${q.negativeMarks}"></td>
 				<td><span th:if="${!q.valid}" class="text-danger fw-bold"
 					th:text="${q.errorMessage}"> </span></td>
 				<td>

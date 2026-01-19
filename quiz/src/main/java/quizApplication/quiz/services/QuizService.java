@@ -14,6 +14,10 @@ public class QuizService {
     @Autowired
     private QuizRepository quizRepository;
 
+
+    public long countAllQuizzes() {
+        return quizRepository.count();
+    }
     public List<Quiz> getAllQuizzes() {
         List<Quiz> quizzes = quizRepository.findAllWithQuestionCount();
 

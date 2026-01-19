@@ -41,10 +41,10 @@ public class CsvQuestionParser {
                 // Skip header
                 if (rowNumber == 1) continue;
 
-                if (data.length != 10) {
+                if (data.length != 9) {
                     throw new RuntimeException(
                         "Invalid CSV format at row " + rowNumber +
-                        ". Expected 10 columns but found " + data.length
+                        ". Expected 9 columns but found " + data.length
                     );
                 }
                 Question q = new Question();
@@ -65,7 +65,7 @@ public class CsvQuestionParser {
                     q.setCorrectAnswer(correct);
 
                     q.setMarks(Integer.parseInt(data[8].trim()));
-                    q.setNegativeMarks(Double.parseDouble(data[9].trim()));
+                   
 
                 } catch (Exception e) {
                     q.setValid(false);

@@ -190,13 +190,13 @@ public class ExamController {
     @PostMapping("/save")
     public String saveAnswer(
             @RequestParam int index,
+            @RequestParam Long questionId,   // <-- get question id from form
             @RequestParam(required = false) String answer,
             @RequestParam String action,
             HttpSession session,
             Principal principal) throws Exception {
 
-        Map<Integer, String> answers =
-                (Map<Integer, String>) session.getAttribute("answers");
+        Map<Long, String> answers = (Map<Long, String>) session.getAttribute("answers");
 
         if (answers == null) {
             answers = new HashMap<>();
@@ -207,16 +207,17 @@ public class ExamController {
 
         List<Question> questions =
                 (List<Question>) session.getAttribute("questions");
-     // ===== CLEAR =====
+
+        // ===== CLEAR =====
         if ("clear".equals(action)) {
-            answers.remove(index);
+            answers.remove(questionId);
             statusMap.put(index, QuestionStatus.VISITED);
         }
 
         // ===== SAVE & NEXT =====
         else if ("next".equals(action)) {
             if (answer != null) {
-                answers.put(index, answer);
+                answers.put(questionId, answer); // <-- key is questionId now
                 statusMap.put(index, QuestionStatus.ATTEMPTED);
             } else {
                 statusMap.put(index, QuestionStatus.VISITED);
@@ -226,13 +227,12 @@ public class ExamController {
         // ===== SAVE & MARK FOR REVIEW =====
         else if ("review".equals(action)) {
             if (answer != null) {
-                answers.put(index, answer);
+                answers.put(questionId, answer);
                 statusMap.put(index, QuestionStatus.ATTEMPTED_REVIEW);
             } else {
                 statusMap.put(index, QuestionStatus.REVIEW);
             }
         }
-
 
         // Store back in session
         session.setAttribute("answers", answers);
@@ -241,7 +241,6 @@ public class ExamController {
 
         // ===== AUTO-SUBMIT =====
         if ("submit".equals(action)) {
-            // Call your existing submit logic
             return submitExam(session, principal);
         }
 
@@ -253,57 +252,41 @@ public class ExamController {
 
         session.setAttribute("currentQuestion", nextIndex);
         return "redirect:/exam/question?n=" + nextIndex;
-
     }
 
 
     @PostMapping("/submit")
     public String submitExam(HttpSession session, Principal principal) throws Exception {
 
-    	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    	String candidateName = auth.getName();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String candidateName = auth.getName();
 
-        List<Question> questions =
-                (List<Question>) session.getAttribute("questions");
+        List<Question> questions = (List<Question>) session.getAttribute("questions");
+        Map<Long, String> answers = (Map<Long, String>) session.getAttribute("answers");
 
-        Map<Integer, String> answers =
-                (Map<Integer, String>) session.getAttribute("answers");
-        
-        Map<Integer, String> answersOneBased = new LinkedHashMap<>();
-        for (Map.Entry<Integer, String> entry : answers.entrySet()) {
-            answersOneBased.put(entry.getKey() + 1, entry.getValue());
-        }
-        
-        Map<Integer, QuestionStatus> statusMap =
-                (Map<Integer, QuestionStatus>) session.getAttribute("statusMap");
-
-        int total = questions.size();
-        int attempted = answers.size();
-
+        Map<Integer, QuestionStatus> statusMap = (Map<Integer, QuestionStatus>) session.getAttribute("statusMap");
 
         int score = 0;
-        for (int i = 0; i < total; i++) {
-            String userAnswer = answers.get(i);
-            if (userAnswer != null &&
-                userAnswer.equals(questions.get(i).getCorrectAnswer())) {
+        for (Question q : questions) {
+            String userAnswer = answers.get(q.getId()); // <-- use questionId
+            if (userAnswer != null && userAnswer.equals(q.getCorrectAnswer())) {
                 score++;
             }
         }
 
         ObjectMapper mapper = new ObjectMapper();
-
         ExamAttempt attempt = new ExamAttempt();
         attempt.setUsername(candidateName);
         attempt.setQuizType(questions.get(0).getQuizType());
         attempt.setScore(score);
         attempt.setSubmittedAt(LocalDateTime.now());
-        attempt.setAnswersJson(mapper.writeValueAsString(answersOneBased)); 
+        attempt.setAnswersJson(mapper.writeValueAsString(answers)); // <-- save questionId as key
+
         examAttemptRepo.save(attempt);
 
         return "redirect:/exam/summary";
     }
 
-    
     @GetMapping("/summary")
     public String examSummary(HttpSession session, Model model, Principal principal) {
 

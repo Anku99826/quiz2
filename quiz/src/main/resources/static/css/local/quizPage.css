@@ -169,20 +169,23 @@ html, body {
     color: white;
 }
 .palette a.attempted.review {
-    background: #ff9800;       /* Orange box */
+    background: #6a1b9a;   /* Purple */
     color: white;
-    border: 2px solid #ff9800;
+    border: 2px solid #6a1b9a;
 }
+
+/* Green dot to indicate "attempted" */
 .palette a.attempted.review::after {
     content: "";
     width: 8px;
     height: 8px;
-    background: #4caf50;       /* Green dot */
+    background: #4caf50;   /* Green */
     border-radius: 50%;
     position: absolute;
     bottom: 3px;
     right: 3px;
 }
+
 /* current question highlight */
 .palette a.current {
     border: 2px solid red;
@@ -251,6 +254,9 @@ html, body {
 .box.review {
     background: #ff9800;
 }
+.box.attempted-review {
+    background: #6a1b9a;   /* Purple */
+}
 
 
 
@@ -268,3 +274,26 @@ html, body {
     background: #ff9800;   /* Orange */
     color: white;
 }
+#fsOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fs-box {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.fs-box button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
