@@ -44,7 +44,7 @@
                         <td th:text="${#numbers.formatDecimal(u[2],1,2)}"></td>
                         <td th:text="${#temporals.format(u[3],'dd-MM-yyyy HH:mm')}"></td>
 
-                        <!-- ✅ SAFE LINK -->
+
                         <td>
                             <a class="btn btn-sm btn-primary"
                                th:href="@{/admin/reports/user/{username}(username=${u[0]})}">
@@ -53,7 +53,7 @@
                         </td>
                     </tr>
 
-                    <tr th:if="${#lists.isEmpty(users)}">
+                    <tr th:if="${#lists.isEmpty(reports)}">
                         <td colspan="6" class="text-muted">
                             No user performance data found
                         </td>
@@ -64,9 +64,7 @@
 
         </div>
     </div>
-<a
-			href="/admin/reports" class="btn btn-outline-secondary mt-3"> ←
-			Back to Dashboard </a>
+			<a href="/admin/reports" class="btn btn-outline-secondary mt-3"> ←	Back to Dashboard </a>
 
 </div>
 

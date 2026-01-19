@@ -238,10 +238,7 @@ public class AdminController {
 	    for (Map.Entry<String, String> e : rawAnswers.entrySet()) {
 	        answers.put(Long.valueOf(e.getKey()), e.getValue());
 	    }
-	    for (Long key : answers.keySet()) {
-	        System.err.println("ANSWER KEY: " + key + " VALUE: " + answers.get(key));
-			
-		}
+	    
 	    List<Question> questions =
 	            questionRepo.findAllById(answers.keySet());
 	    
