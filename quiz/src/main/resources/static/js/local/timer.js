@@ -39,3 +39,57 @@ document.addEventListener("DOMContentLoaded", function () {
         time--;
     }, 1000);
 });
+
+
+
+// ===============================
+// Disable Right Click
+// ===============================
+document.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+});
+
+// ===============================
+// Disable Keyboard Shortcuts
+// ===============================
+document.addEventListener('keydown', function (e) {
+
+    // F12
+    if (e.key === "F12") {
+        e.preventDefault();
+    }
+
+    // Ctrl + key combinations
+    if (e.ctrlKey && (
+		e.key === '[a-zA-Z0-9]' ||
+        e.key === 'u' || // View source
+        e.key === 's' || // Save
+        e.key === 'c' || // Copy
+        e.key === 'v' || // Paste
+        e.key === 'x' || // Cut
+        e.key === 'a' || // Select all
+        e.key === 'i' || // Dev tools
+        e.key === 'j' ||
+		e.key ==='e'  ||
+		e.key ==='d'  ||
+		e.key === 'r' ||
+		e.key === 'q'
+    )) {
+        e.preventDefault();
+    }
+
+    // Ctrl + Shift combinations
+    if (e.ctrlKey && e.shiftKey && (
+        e.key === 'I' ||
+        e.key === 'J' ||
+        e.key === 'C'
+    )) {
+        e.preventDefault();
+    }
+
+    // Optional: block Alt / Esc / Tab
+    if (e.key === 'Alt' || e.key === 'Escape' || e.key === 'Tab') {
+        e.preventDefault();
+    }
+});
+
