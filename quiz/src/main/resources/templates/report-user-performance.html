@@ -19,7 +19,18 @@
 
 <div class="container mt-4">
 
-    <h3>User Performance</h3>
+   
+<div class="d-flex justify-content-between align-items-center mb-3">
+	 <h3>
+    User Performance
+    <small class="text-muted" th:text="'(' + ${selectedQuiz} + ')'"></small>
+</h3>
+	
+
+			<a href="/admin/reports/user-performance" class="btn btn-outline-secondary mt-3"> ←	Back to Quiz Selection </a>
+		</div>
+
+
 
     <div class="card shadow mt-3">
         <div class="card-body p-0">
@@ -30,7 +41,7 @@
                         <th>#</th>
                         <th>Username</th>
                         <th>Total Attempts</th>
-                        <th>Average Score</th>
+                        <th>Score</th>
                         <th>Last Attempt</th>
                         <th>Action</th>
                     </tr>
@@ -41,7 +52,7 @@
                         <td th:text="${stat.count}"></td>
                         <td th:text="${u[0]}"></td>
                         <td th:text="${u[1]}"></td>
-                        <td th:text="${#numbers.formatDecimal(u[2],1,2)}"></td>
+                        <td th:text="${#numbers.formatDecimal(u[2], 0, 0)}"></td>
                         <td th:text="${#temporals.format(u[3],'dd-MM-yyyy HH:mm')}"></td>
 
 
@@ -64,7 +75,7 @@
 
         </div>
     </div>
-			<a href="/admin/reports" class="btn btn-outline-secondary mt-3"> ←	Back to Dashboard </a>
+			
 
 </div>
 

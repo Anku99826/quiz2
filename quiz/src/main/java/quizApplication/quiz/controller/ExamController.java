@@ -4,9 +4,9 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -53,34 +53,54 @@ public class ExamController {
     @PostMapping("/begin")
     public String startExam(@RequestParam String quizType,
                             HttpSession session,
+                            Principal principal,
                             RedirectAttributes redirectAttributes) {
 
-         
-        // 2. Fetch questions only if quiz is active
+        // 🔁 CHECK UNFINISHED EXAM
+        ExamAttempt pending =
+                examAttemptRepo.findByUsernameAndCompletedFalse(principal.getName());
+
+        if (pending != null) {
+            return "redirect:/exam/resume";
+        }
+
         List<Question> questions = questionRepo.findByQuizType(quizType);
 
         if (questions == null || questions.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "No questions available for selected exam");
+            redirectAttributes.addFlashAttribute("error", "No questions available");
             return "redirect:/user/dashboard";
         }
 
-        // 3. Set exam start time ONCE
+        // ⏱️ START TIMER
         session.setAttribute("EXAM_START_TIME", System.currentTimeMillis());
 
-        // 4. Initialize status map
+        // STATUS MAP
         Map<Integer, QuestionStatus> statusMap = new HashMap<>();
         for (int i = 0; i < questions.size(); i++) {
             statusMap.put(i, QuestionStatus.NOT_VISITED);
         }
 
-        // 5. Store session attributes
         session.setAttribute("questions", questions);
         session.setAttribute("currentQuestion", 0);
         session.setAttribute("statusMap", statusMap);
-        session.setAttribute("answers", new HashMap<Integer, Integer>());
+        session.setAttribute("answers", new HashMap<Long, String>());
+
+        // 💾 CREATE ATTEMPT
+        ExamAttempt attempt = new ExamAttempt();
+        attempt.setUsername(principal.getName());
+        attempt.setQuizType(quizType);
+        attempt.setStartedAt(LocalDateTime.now());
+        attempt.setCompleted(false);
+        attempt.setCurrentQuestion(0);
+        attempt.setAnswersJson("{}");
+        attempt.setStatusJson("{}");
+        attempt.setScore(0);
+
+        examAttemptRepo.save(attempt);
 
         return "redirect:/exam/question";
     }
+
 
 
     @GetMapping("/instructions")
@@ -192,15 +212,15 @@ public class ExamController {
 
     
     @PostMapping("/save")
-    public String saveAnswer(
-            @RequestParam int index,
-            @RequestParam Long questionId,   // <-- get question id from form
-            @RequestParam(required = false) String answer,
-            @RequestParam String action,
-            HttpSession session,
-            Principal principal) throws Exception {
+    public String saveAnswer(@RequestParam int index,
+                             @RequestParam Long questionId,
+                             @RequestParam(required = false) String answer,
+                             @RequestParam String action,
+                             HttpSession session,
+                             Principal principal) throws Exception {
 
-        Map<Long, String> answers = (Map<Long, String>) session.getAttribute("answers");
+        Map<Long, String> answers =
+                (Map<Long, String>) session.getAttribute("answers");
 
         if (answers == null) {
             answers = new HashMap<>();
@@ -212,23 +232,20 @@ public class ExamController {
         List<Question> questions =
                 (List<Question>) session.getAttribute("questions");
 
-        // ===== CLEAR =====
         if ("clear".equals(action)) {
             answers.remove(questionId);
             statusMap.put(index, QuestionStatus.VISITED);
         }
 
-        // ===== SAVE & NEXT =====
         else if ("next".equals(action)) {
             if (answer != null) {
-                answers.put(questionId, answer); // <-- key is questionId now
+                answers.put(questionId, answer);
                 statusMap.put(index, QuestionStatus.ATTEMPTED);
             } else {
                 statusMap.put(index, QuestionStatus.VISITED);
             }
         }
 
-        // ===== SAVE & MARK FOR REVIEW =====
         else if ("review".equals(action)) {
             if (answer != null) {
                 answers.put(questionId, answer);
@@ -238,86 +255,128 @@ public class ExamController {
             }
         }
 
-        // Store back in session
+        // 💾 SAVE TO SESSION
         session.setAttribute("answers", answers);
         session.setAttribute("statusMap", statusMap);
-        session.setAttribute("currentQuestion", index);
 
-        // ===== AUTO-SUBMIT =====
-        if ("submit".equals(action)) {
-            return submitExam(session, principal);
-        }
+        // 💾 SAVE TO DATABASE (KEY STEP)
+        ExamAttempt attempt =
+                examAttemptRepo.findByUsernameAndCompletedFalse(principal.getName());
 
-        // ===== NAVIGATION =====
-        int nextIndex = index + 1;
-        if (nextIndex >= questions.size()) {
-            nextIndex = questions.size() - 1;
-        }
+        ObjectMapper mapper = new ObjectMapper();
+        attempt.setAnswersJson(mapper.writeValueAsString(answers));
+        attempt.setStatusJson(mapper.writeValueAsString(statusMap));
+        attempt.setCurrentQuestion(index);
 
+        examAttemptRepo.save(attempt);
+
+        int nextIndex = Math.min(index + 1, questions.size() - 1);
         session.setAttribute("currentQuestion", nextIndex);
+
         return "redirect:/exam/question?n=" + nextIndex;
     }
 
 
     @PostMapping("/submit")
     public String submitExam(HttpSession session, Principal principal) throws Exception {
+    
+        ExamAttempt attempt =
+                examAttemptRepo.findByUsernameAndCompletedFalse(principal.getName());
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String candidateName = auth.getName();
+        List<Question> questions =
+                (List<Question>) session.getAttribute("questions");
 
-        List<Question> questions = (List<Question>) session.getAttribute("questions");
-        Map<Long, String> answers = (Map<Long, String>) session.getAttribute("answers");
-
-        Map<Integer, QuestionStatus> statusMap = (Map<Integer, QuestionStatus>) session.getAttribute("statusMap");
+        Map<Long, String> answers =
+                (Map<Long, String>) session.getAttribute("answers");
 
         int score = 0;
         for (Question q : questions) {
-            String userAnswer = answers.get(q.getId()); // <-- use questionId
+            String userAnswer = answers.get(q.getId());
             if (userAnswer != null && userAnswer.equals(q.getCorrectAnswer())) {
                 score++;
             }
         }
-
         ObjectMapper mapper = new ObjectMapper();
-        ExamAttempt attempt = new ExamAttempt();
-        attempt.setUsername(candidateName);
-        attempt.setQuizType(questions.get(0).getQuizType());
+        attempt.setAnswersJson(mapper.writeValueAsString(answers));
+
         attempt.setScore(score);
         attempt.setSubmittedAt(LocalDateTime.now());
-        attempt.setAnswersJson(mapper.writeValueAsString(answers)); // <-- save questionId as key
+        attempt.setCompleted(true);
 
         examAttemptRepo.save(attempt);
 
+      
+        System.err.println("Exam submitted successfully with score: " + score);
         return "redirect:/exam/summary";
     }
 
+    
+    @GetMapping("/resume")
+    public String resumeExam(HttpSession session, Principal principal) throws Exception {
+
+        ExamAttempt attempt =
+                examAttemptRepo.findByUsernameAndCompletedFalse(principal.getName());
+
+        if (attempt == null) {
+            return "redirect:/user/dashboard";
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        List<Question> questions =
+                questionRepo.findByQuizType(attempt.getQuizType());
+
+        Map<Long, String> answers =
+                mapper.readValue(attempt.getAnswersJson(),
+                    new TypeReference<Map<Long, String>>() {});
+
+        Map<Integer, QuestionStatus> statusMap =
+                mapper.readValue(attempt.getStatusJson(),
+                    new TypeReference<Map<Integer, QuestionStatus>>() {});
+
+        session.setAttribute("questions", questions);
+        session.setAttribute("answers", answers);
+        session.setAttribute("statusMap", statusMap);
+        session.setAttribute("currentQuestion", attempt.getCurrentQuestion());
+
+        // ⏱️ RESTORE TIMER
+        long elapsed =
+            java.time.Duration.between(attempt.getStartedAt(), LocalDateTime.now()).toMillis();
+
+        session.setAttribute("EXAM_START_TIME",
+                System.currentTimeMillis() - elapsed);
+
+        return "redirect:/exam/question?n=" + attempt.getCurrentQuestion();
+    }
+
+    
+    
     @GetMapping("/summary")
     public String examSummary(HttpSession session, Model model, Principal principal) {
-
+    	System.err.println("Inside exam summary");
         if (principal == null) {
             return "redirect:/login/user";
         }
 
         String username = principal.getName();
         UserDetails user = userDetailsRepository.findByUserid(username);
-        String fullName = user.getFirstName() + " " +  user.getLastName();
+        String fullName = Optional.ofNullable(user)
+                .map(u -> u.getFirstName() + " " + u.getLastName())
+                .filter(name -> !name.contains("null")) // guards against null first/last name
+                .orElse(username);
         
        
-        
-    	if (username == null) {      
-            return "redirect:/login/user";
-        }
-        
+       
         // Fetch last attempt
         ExamAttempt attempt = examAttemptRepo.findByUsername(username);
-        if(attempt ==null)
-        {
+        if(attempt == null)
+        {	System.err.println("attempt is null");
         	return "redirect:/login/user";
         }
         
         else {
         	
-        
+
         // Parse answersJson
         Map<Integer, String> answers = new HashMap<>();
 
@@ -329,23 +388,34 @@ public class ExamController {
         }
 
 
-  
         List<Question> questions = questionRepo.findByQuizType(attempt.getQuizType());
 
         int total = questions.size();
         int attempted = (int) answers.values().stream().filter(a -> a != null && !a.isEmpty()).count();
         int unattempted = total - attempted;
-        int review = 0; // If you want, store review questions separately in session
 
         model.addAttribute("candidateName", fullName);
-        model.addAttribute("userid", user.getUserid());
+        model.addAttribute(
+        	    "userid",
+        	    user != null ? user.getUserid() : username
+        	);
+
         model.addAttribute("examType", attempt.getQuizType());
         model.addAttribute("total", total);
         model.addAttribute("attempted", attempted);
         model.addAttribute("unattempted", unattempted);
-        model.addAttribute("review", review);
-        model.addAttribute("score", attempt.getScore());
+        model.addAttribute("timeTaken",
+        	    String.format("%d hours %d minutes",
+        	        java.time.Duration.between(attempt.getStartedAt(), attempt.getSubmittedAt()).toHours(),
+        	        java.time.Duration.between(attempt.getStartedAt(), attempt.getSubmittedAt()).toMinutes() % 60
+        	    )
+        	);
 
+ 
+        
+        System.err.println("before return statement");
+        session.removeAttribute("questions");
+        session.removeAttribute("answers");
         return "examSummary";
     }
    }

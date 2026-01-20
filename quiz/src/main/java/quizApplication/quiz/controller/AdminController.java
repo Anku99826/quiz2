@@ -265,14 +265,9 @@ public class AdminController {
 
 	@GetMapping("/reports")
 	public String viewReports(Model model) {
-		 long totalQuizzes = quizService.countAllQuizzes();
-		 
-		 
-		
 		model.addAttribute("totalAttempts", examAttemptRepo.totalAttempts());
-		model.addAttribute("totalQuizzes", totalQuizzes);
+		model.addAttribute("totalQuizzes", examAttemptRepo.totalQuizzes());
 		model.addAttribute("averageScore", examAttemptRepo.averageScore());
-		
 
 		return "report";
 	}
@@ -305,35 +300,42 @@ public class AdminController {
 	}
 
 	@GetMapping("/reports/quiz-performance")
-	public String quizWiseReport(@RequestParam(required = false) String quizType,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-			Model model) {
-		LocalDateTime from = (fromDate != null) ? fromDate.atStartOfDay() : null;
-		LocalDateTime to = (toDate != null) ? toDate.atTime(23, 59, 59) : null;
-		
-		List<Object[]> quizList = examAttemptRepo.quizPerformanceFiltered(quizType, from, to);
-		System.err.println(examAttemptRepo.quizPerformanceFiltered(quizType, from, to));
-		for (Object[] objects : quizList) {
-			System.err.println(objects.length);
-		}
-		
-		model.addAttribute("reports", examAttemptRepo.quizPerformanceFiltered(quizType, from, to));
+	public String quizWiseReport(@RequestParam(required = false) String quizType, Model model) {
 
-		model.addAttribute("selectedQuiz", quizType);
+	    model.addAttribute("reports", examAttemptRepo.quizPerformanceFiltered(quizType)
+	    );
 
-		return "report-quiz-performance";
+	    model.addAttribute("selectedQuiz", quizType);
+	    return "report-quiz-performance";
 	}
 
 	@GetMapping("/reports/user-performance")
-	public String userPerformance(Model model) {
+	public String userPerformanceQuizList(Model model) {
 
-		List<Object[]> reports = examAttemptRepo.userPerformanceReport();
+	    model.addAttribute(
+	        "quizzes",
+	        examAttemptRepo.findAttemptedQuizzes()
+	    );
 
-		model.addAttribute("reports", reports);
-
-		return "report-user-performance";
+	    return "report-user-performance-quizzes";
 	}
+	
+	
+	@GetMapping("/reports/user-performance/{quizType}")
+	public String userPerformanceByQuiz(
+	        @PathVariable String quizType,
+	        Model model) {
+
+	    model.addAttribute(
+	        "reports",
+	        examAttemptRepo.userPerformanceByQuiz(quizType)
+	    );
+
+	    model.addAttribute("selectedQuiz", quizType);
+
+	    return "report-user-performance";
+	}
+
 
 	@GetMapping("/reports/user/{username}")
 	public String userAttempts(@PathVariable String username, Model model) {
@@ -342,21 +344,38 @@ public class AdminController {
 	}
 
 	@GetMapping("/report/export/quiz-performance")
-	public void exportQuizPerformance(@RequestParam(required = false) String quizType,
-			@RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate fromDate,
-			@RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate toDate,
-			HttpServletResponse response) throws IOException {
+	public void exportQuizPerformance(
+	        @RequestParam(required = false) String quizType,
+	        HttpServletResponse response) throws IOException {
 
-		response.setContentType("text/csv");
-		response.setHeader("Content-Disposition", "attachment; filename=quiz-performance.csv");
+	    response.setContentType("text/csv");
+	    response.setHeader(
+	            "Content-Disposition",
+	            "attachment; filename=quiz-performance.csv"
+	    );
 
-		PrintWriter writer = response.getWriter();
-		writer.println("Quiz,Attempts,Avg,Max,Min");
+	    PrintWriter writer = response.getWriter();
 
-		for (Object[] r : examAttemptRepo.quizPerformanceReport()) {
-			writer.println(r[0] + "," + r[1] + "," + r[2] + "," + r[3] + "," + r[4]);
-		}
+	    // CSV Header (matches new report)
+	    writer.println("Quiz,Start Date,Total Marks,Attempts,Avg Marks,Max Marks,Min Marks");
+
+	    List<Object[]> reports = examAttemptRepo.quizPerformanceFiltered(quizType);
+
+	    for (Object[] r : reports) {
+	        writer.println(
+	                r[0] + "," +                       // Quiz Title
+	                r[1] + "," +                       // Start Date
+	                r[2] + "," +                       // Total Marks
+	                r[3] + "," +                       // Attempts
+	                String.format("%.2f", r[4]) + "," +// Avg
+	                r[5] + "," +                       // Max
+	                r[6]                               // Min
+	        );
+	    }
+
+	    writer.flush();
 	}
+
 	@GetMapping("/reports/attempt/{id}/pdf")
 	public void downloadAttemptPdf(@PathVariable Long id,
 	                               HttpServletResponse response) throws Exception {

@@ -21,38 +21,37 @@
 		<div class="row text-center mt-4">
 			<div class="row text-center mt-4">
 
- 
+				<div class="col-md-4">
+					<div class="card shadow p-3">
+						<h6>Total Quizzes</h6>
+						<h2 th:text="${totalQuizzes}"></h2>
+					</div>
+				</div>
 
-    <div class="col-md-4">
-        <div class="card shadow p-3">
-            <h6>Total Quizzes</h6>
-            <h2 th:text="${totalQuizzes}"></h2>
-        </div>
-    </div>
-    
-       <div class="col-md-4">
-        <div class="card shadow p-3">
-            <h6>Total Attempts</h6>
-            <h2 th:text="${totalAttempts}"></h2>
-        </div>
-    </div>
+				<div class="col-md-4">
+					<div class="card shadow p-3">
+						<h6>Total Attempts</h6>
+						<h2 th:text="${totalAttempts}"></h2>
+					</div>
+				</div>
 
-    <div class="col-md-4">
-        <div class="card shadow p-3">
-            <h6>Average Score</h6>
-            <h2 th:text="${#numbers.formatDecimal(averageScore,1,2)}"></h2>
-        </div>
-    </div>
+				<div class="col-md-4">
+					<div class="card shadow p-3">
+						<h6>Average Score</h6>
+						<h2 th:text="${#numbers.formatDecimal(averageScore,1,2)}"></h2>
+					</div>
+				</div>
 
-</div>
+			</div>
 
 
 		</div>
-
+		<hr />
 		<div class="mt-4">
 			<a href="/admin/reports/quiz-performance"
 				class="btn btn-primary me-2">Quiz Performance</a> <a
-				href="/admin/reports/user-performance" class="btn btn-secondary">User Performance</a>
+				href="/admin/reports/user-performance" class="btn btn-secondary">User
+				Performance</a>
 		</div>
 	</div>
 

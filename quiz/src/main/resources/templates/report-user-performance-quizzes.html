@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Select Quiz</title>
+
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link rel="stylesheet"
+	href="/css/local/report-user-performance-quizzes.css">
+</head>
+
+<body>
+
+	<div th:insert="fragments/adminLayout :: adminLayout">...</div>
+
+	<div class="container mt-4">
+
+		<!-- Header row with back button on the right -->
+		<div class="d-flex justify-content-between align-items-center mb-3">
+			<h3>Select Quiz</h3>
+
+			<a href="/admin/reports" class="btn btn-outline-secondary"> ←
+				Back to Dashboard </a>
+		</div>
+
+		<div class="row">
+			<!-- Full-width column -->
+			<div class="col-12">
+
+				<ul class="list-group quiz-list">
+					<li class="list-group-item quiz-item position-relative"
+    th:each="quiz : ${quizzes}">
+
+    <a class="stretched-link"
+       th:href="@{/admin/reports/user-performance/{quizType}(quizType=${quiz})}"></a>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-1" th:text="${quiz}"></h5>
+            <small class="text-muted">View user performance and attempts</small>
+        </div>
+
+        <span class="btn btn-outline-primary">View Users</span>
+    </div>
+</li>
+
+
+					<li class="list-group-item text-muted"
+						th:if="${#lists.isEmpty(quizzes)}">No quizzes with attempts
+						found</li>
+				</ul>
+
+
+			</div>
+		</div>
+
+	</div>
+
+</body>
+</html>

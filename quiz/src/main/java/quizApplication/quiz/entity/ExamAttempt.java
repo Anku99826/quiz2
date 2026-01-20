@@ -1,23 +1,15 @@
 package quizApplication.quiz.entity;
 
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 public class ExamAttempt {
 
     @Id
@@ -26,10 +18,21 @@ public class ExamAttempt {
 
     private String username;
     private String quizType;
-    private int score;
+    @Column(nullable = false)
+    private Integer score;
+
+    private LocalDateTime startedAt;
+    private LocalDateTime submittedAt;
+
+    private Boolean completed;   // ⭐ FOR RESUME LOGIC
 
     @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String answersJson;
 
-    private LocalDateTime submittedAt;
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String statusJson;
+
+    private Integer currentQuestion;
 }

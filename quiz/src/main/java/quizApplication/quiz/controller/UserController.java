@@ -2,6 +2,7 @@ package quizApplication.quiz.controller;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -37,7 +38,11 @@ public class UserController {
 
         String username = principal.getName();
         UserDetails user = userDetailsRepository.findByUserid(username);
-        String fullName = user.getFirstName() + " " +  user.getLastName();
+        String fullName = Optional.ofNullable(user)
+                .map(u -> u.getFirstName() + " " + u.getLastName())
+                .filter(name -> !name.contains("null")) // guards against null first/last name
+                .orElse(username);
+
         
         ExamAttempt existingAttempt = examAttemptRepo.findByUsername(username);
         if (existingAttempt != null) {

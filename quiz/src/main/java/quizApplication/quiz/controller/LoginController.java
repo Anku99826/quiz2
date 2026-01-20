@@ -26,8 +26,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 
 import jakarta.servlet.http.HttpServletRequest;
+import quizApplication.quiz.entity.ExamAttempt;
 import quizApplication.quiz.entity.User;
 import quizApplication.quiz.entity.UserDetails;
+import quizApplication.quiz.repository.ExamAttemptRepository;
 import quizApplication.quiz.repository.UserDetailsRepository;
 import quizApplication.quiz.repository.UserRepository;
 
@@ -48,7 +50,10 @@ public class LoginController {
 	private UserDetailsRepository userDetailsRepository;
 	@Autowired
 	private PasswordEncoder passwordEncoder;
-
+	@Autowired
+	private ExamAttemptRepository examAttemptRepo;
+	
+	
 	@GetMapping("/admin")
 	private String getAdminLoginPage() {
 		return "adminLogin";
@@ -141,6 +146,13 @@ public class LoginController {
 					request.getSession(true)
 							.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
 
+					ExamAttempt pending =
+					        examAttemptRepo.findByUsernameAndCompletedFalse(username);
+
+					if (pending != null) {
+					    return "redirect:/exam/resume";
+					}
+
 					return "redirect:/user/dashboard";
 				}
 			}
@@ -171,6 +183,13 @@ public class LoginController {
 			request.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
 					context);
 
+			ExamAttempt pending =
+			        examAttemptRepo.findByUsernameAndCompletedFalse(username);
+
+			if (pending != null) {
+			    return "redirect:/exam/resume";
+			}
+
 			return "redirect:/user/dashboard";
 		}
 
@@ -186,6 +205,13 @@ public class LoginController {
 
 			request.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
 					context);
+
+			ExamAttempt pending =
+			        examAttemptRepo.findByUsernameAndCompletedFalse(username);
+
+			if (pending != null) {
+			    return "redirect:/exam/resume";
+			}
 
 			return "redirect:/user/dashboard";
 		}
