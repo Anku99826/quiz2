@@ -28,7 +28,7 @@ public class Question {
     private String quizType;      
     private String section;       
 
-    @Lob
+    @Column(name = "question_text", columnDefinition = "TEXT")
     private String questionText;
 
     private String optionA;
@@ -40,7 +40,6 @@ public class Question {
     @Column(nullable = false)
     private Integer marks;        // 1
 
-    private Integer difficulty; 
     @ManyToOne
     @JoinColumn(name = "quiz_id")
     private Quiz quiz;// 1-5

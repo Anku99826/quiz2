@@ -61,7 +61,7 @@ document.addEventListener('keydown', function (e) {
 
     // Ctrl + key combinations
     if (e.ctrlKey && (
-		e.key === '[a-zA-Z0-9]' ||
+		
         e.key === 'u' || // View source
         e.key === 's' || // Save
         e.key === 'c' || // Copy

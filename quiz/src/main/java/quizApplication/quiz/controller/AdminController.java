@@ -311,7 +311,13 @@ public class AdminController {
 			Model model) {
 		LocalDateTime from = (fromDate != null) ? fromDate.atStartOfDay() : null;
 		LocalDateTime to = (toDate != null) ? toDate.atTime(23, 59, 59) : null;
-
+		
+		List<Object[]> quizList = examAttemptRepo.quizPerformanceFiltered(quizType, from, to);
+		System.err.println(examAttemptRepo.quizPerformanceFiltered(quizType, from, to));
+		for (Object[] objects : quizList) {
+			System.err.println(objects.length);
+		}
+		
 		model.addAttribute("reports", examAttemptRepo.quizPerformanceFiltered(quizType, from, to));
 
 		model.addAttribute("selectedQuiz", quizType);

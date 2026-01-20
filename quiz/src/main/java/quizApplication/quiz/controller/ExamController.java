@@ -23,8 +23,10 @@ import jakarta.servlet.http.HttpSession;
 import quizApplication.quiz.entity.ExamAttempt;
 import quizApplication.quiz.entity.Question;
 import quizApplication.quiz.entity.QuestionStatus;
+import quizApplication.quiz.entity.UserDetails;
 import quizApplication.quiz.repository.ExamAttemptRepository;
 import quizApplication.quiz.repository.QuestionRepository;
+import quizApplication.quiz.repository.UserDetailsRepository;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 @Controller
@@ -36,6 +38,8 @@ public class ExamController {
     private QuestionRepository questionRepo;
     @Autowired
     private ExamAttemptRepository examAttemptRepo;
+    @Autowired
+    private UserDetailsRepository userDetailsRepository;
 
     
     private static final long EXAM_DURATION_MS = 30 * 60 * 1000; // 30 mins
@@ -295,6 +299,10 @@ public class ExamController {
         }
 
         String username = principal.getName();
+        UserDetails user = userDetailsRepository.findByUserid(username);
+        String fullName = user.getFirstName() + " " +  user.getLastName();
+        
+       
         
     	if (username == null) {      
             return "redirect:/login/user";
@@ -329,7 +337,8 @@ public class ExamController {
         int unattempted = total - attempted;
         int review = 0; // If you want, store review questions separately in session
 
-        model.addAttribute("candidateName", attempt.getUsername());
+        model.addAttribute("candidateName", fullName);
+        model.addAttribute("userid", user.getUserid());
         model.addAttribute("examType", attempt.getQuizType());
         model.addAttribute("total", total);
         model.addAttribute("attempted", attempted);

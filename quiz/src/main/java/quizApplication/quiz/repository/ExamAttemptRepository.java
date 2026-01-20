@@ -2,7 +2,6 @@ package quizApplication.quiz.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -58,7 +57,6 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttempt, Long> 
 			      AND (:toDate IS NULL OR e.submittedAt <= :toDate)
 			    GROUP BY e.quizType
 			""")
-	List<Object[]> quizPerformanceFiltered(@Param("quizType") String quizType,
-			@Param("fromDate") LocalDateTime fromDate, @Param("toDate") LocalDateTime toDate);
+	List<Object[]> quizPerformanceFiltered(@Param("quizType") String quizType, @Param("fromDate") LocalDateTime fromDate, @Param("toDate") LocalDateTime toDate);
 
 }

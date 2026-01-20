@@ -27,8 +27,9 @@ import org.springframework.web.client.RestTemplate;
 
 import jakarta.servlet.http.HttpServletRequest;
 import quizApplication.quiz.entity.User;
+import quizApplication.quiz.entity.UserDetails;
+import quizApplication.quiz.repository.UserDetailsRepository;
 import quizApplication.quiz.repository.UserRepository;
-
 
 @Controller
 @RequestMapping("/login")
@@ -43,7 +44,8 @@ public class LoginController {
 	private RestTemplate restTemplate;
 	@Autowired
 	private UserRepository userRepository;
-
+	@Autowired
+	private UserDetailsRepository userDetailsRepository;
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
@@ -53,31 +55,23 @@ public class LoginController {
 	}
 
 	@PostMapping("/admin")
-	public String adminLogin(
-	        @RequestParam String username,
-	        @RequestParam String password,
-	        HttpServletRequest request,
-	        Model model) {
+	public String adminLogin(@RequestParam String username, @RequestParam String password, HttpServletRequest request,
+			Model model) {
 		System.err.println("INISDE ADMIN LOGIN POST METHOD");
-	    User admin = userRepository.findByLoginId(username);
+		User admin = userRepository.findByLoginId(username);
 
-	    if (admin == null || !passwordEncoder.matches(password, admin.getPassword())) {
-	        model.addAttribute("error", "Invalid admin credentials");
-	        return "adminLogin";
-	    }
+		if (admin == null || !passwordEncoder.matches(password, admin.getPassword())) {
+			model.addAttribute("error", "Invalid admin credentials");
+			return "adminLogin";
+		}
 
-	    UsernamePasswordAuthenticationToken auth =
-	            new UsernamePasswordAuthenticationToken(
-	                    admin.getLoginId(),
-	                    null,
-	                    List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
-	            );
+		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(admin.getLoginId(), null,
+				List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
 
-	    saveSecurityContext(auth, request);
+		saveSecurityContext(auth, request);
 
-	    return "redirect:/admin/dashboard";
+		return "redirect:/admin/dashboard";
 	}
-
 
 	@GetMapping("/user")
 	private String getLoginPage() {
@@ -85,136 +79,130 @@ public class LoginController {
 	}
 
 	@PostMapping("/user")
-	private String postUserLoginRequest(
-	        @RequestParam String username,
-	        @RequestParam String password,
-	        Model model,
-	        HttpServletRequest request) {
+	private String postUserLoginRequest(@RequestParam String username, @RequestParam String password, Model model,
+			HttpServletRequest request) {
 
-	    try {
+		try {
 
-	        HttpHeaders headers = new HttpHeaders();
-	        headers.setContentType(MediaType.APPLICATION_JSON);
-	        headers.set("Authorization", authToken);
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.set("Authorization", authToken);
 
-	        String jsonBody =
-	                "{ \"user_id\": \"" + username + "\", \"password\": \"" + password + "\" }";
+			String jsonBody = "{ \"user_id\": \"" + username + "\", \"password\": \"" + password + "\" }";
 
-	        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+			HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
 
-	        ResponseEntity<Map> response =
-	                restTemplate.exchange(authURL, HttpMethod.POST, entity, Map.class);
+			ResponseEntity<Map> response = restTemplate.exchange(authURL, HttpMethod.POST, entity, Map.class);
 
-	        if (response.getStatusCode() == HttpStatus.OK) {
+			if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+				Map<String, Object> topLevel = response.getBody();
+				String topStatus = (String) topLevel.get("status");
+				Map<String, Object> body = (Map<String, Object>) topLevel.get("body");
+				if (body != null) {
+					String role = (String) body.get("role");
+					String userID = (String) body.get("user_id");
+					String firstName = (String) body.get("first_name");
+					String lastName = (String) body.get("last_name");
+					String email = (String) body.get("email");
+					String department = (String) body.get("department");
+					String designation = (String) body.get("designation");
+					String scale = (String) body.get("scale");
+					String location = (String) body.get("location");
+					String userStatus = (String) body.get("status");
+					boolean isActive = "SUCCESS".equalsIgnoreCase(topStatus) && "enabled".equalsIgnoreCase(userStatus);
 
-	            UsernamePasswordAuthenticationToken auth =
-	                    new UsernamePasswordAuthenticationToken(
-	                            username,
-	                            null,
-	                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
-	                    );
+					if (isActive) {
+						UserDetails userDetails = userDetailsRepository.findByUserid(userID);
+						if (userDetails == null) {
+							userDetails = new UserDetails(userID, firstName, lastName, email, department, designation,
+									scale, location);
+						} else {
+							userDetails.setUserid(userID);
+							userDetails.setFirstName(firstName);
+							userDetails.setLastName(lastName);
+							userDetails.setEmail(email);
+							userDetails.setDepartment(department);
+							userDetails.setDesignation(designation);
+							userDetails.setScale(scale);
+							userDetails.setLocation(location);
+						}
 
-	            SecurityContext context = SecurityContextHolder.createEmptyContext();
-	            context.setAuthentication(auth);
+						userDetailsRepository.save(userDetails);
+					}
 
-	            SecurityContextHolder.setContext(context);
+					UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null,
+							List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
-	            request.getSession(true)
-	                   .setAttribute(
-	                       HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-	                       context
-	                   );
+					SecurityContext context = SecurityContextHolder.createEmptyContext();
+					context.setAuthentication(auth);
 
-	            return "redirect:/user/dashboard";
-	        }
+					SecurityContextHolder.setContext(context);
 
-	    } catch (Exception e) {
-	        model.addAttribute("error", "Invalid username or password");
-	    }
+					request.getSession(true)
+							.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
 
-	    return "userLoginPage";
+					return "redirect:/user/dashboard";
+				}
+			}
+
+		} catch (Exception e) {
+			model.addAttribute("error", "Invalid username or password");
+		}
+
+		return "userLoginPage";
 	}
-	
-	
+
 	@PostMapping("/user2")
-	private String loginForTestUser(
-	        @RequestParam String username,
-	        @RequestParam String password,
-	        Model model,
-	        HttpServletRequest request) {
+	private String loginForTestUser(@RequestParam String username, @RequestParam String password, Model model,
+			HttpServletRequest request) {
 		System.err.println("INSIDE TEST LOGIN METHOD");
-		
-	    // ===== TEST LOGIN ONLY =====
-	    if ("test".equals(username) && "test".equals(password)) {
 
-	        UsernamePasswordAuthenticationToken auth =
-	                new UsernamePasswordAuthenticationToken(
-	                        username,
-	                        null,
-	                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
-	                );
+		// ===== TEST LOGIN ONLY =====
+		if ("test".equals(username) && "test".equals(password)) {
 
-	        SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(auth);
+			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null,
+					List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
-            SecurityContextHolder.setContext(context);
+			SecurityContext context = SecurityContextHolder.createEmptyContext();
+			context.setAuthentication(auth);
 
-            request.getSession(true)
-                   .setAttribute(
-                       HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-                       context
-                   );
+			SecurityContextHolder.setContext(context);
 
+			request.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+					context);
 
-	        return "redirect:/user/dashboard";
-	    }
-	    
-	    else if ("test2".equals(username) && "test2".equals(password)) {
+			return "redirect:/user/dashboard";
+		}
 
-	        UsernamePasswordAuthenticationToken auth =
-	                new UsernamePasswordAuthenticationToken(
-	                        username,
-	                        null,
-	                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
-	                );
+		else if ("test2".equals(username) && "test2".equals(password)) {
 
-	        SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(auth);
+			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null,
+					List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
-            SecurityContextHolder.setContext(context);
+			SecurityContext context = SecurityContextHolder.createEmptyContext();
+			context.setAuthentication(auth);
 
-            request.getSession(true)
-                   .setAttribute(
-                       HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-                       context
-                   );
+			SecurityContextHolder.setContext(context);
 
+			request.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+					context);
 
-	        return "redirect:/user/dashboard";
-	    }
-	    
+			return "redirect:/user/dashboard";
+		}
 
-	    model.addAttribute("error", "Invalid username or password");
-	    return "userLoginPage";
+		model.addAttribute("error", "Invalid username or password");
+		return "userLoginPage";
 	}
 
-	
-	
-	
-	private void saveSecurityContext(
-	        UsernamePasswordAuthenticationToken auth,
-	        HttpServletRequest request) {
+	private void saveSecurityContext(UsernamePasswordAuthenticationToken auth, HttpServletRequest request) {
 
-	    SecurityContext context = SecurityContextHolder.createEmptyContext();
-	    context.setAuthentication(auth);
+		SecurityContext context = SecurityContextHolder.createEmptyContext();
+		context.setAuthentication(auth);
 
-	    SecurityContextHolder.setContext(context);
+		SecurityContextHolder.setContext(context);
 
-	    request.getSession(true).setAttribute(
-	        HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-	        context
-	    );
+		request.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+				context);
 	}
-	
-	
+
 }

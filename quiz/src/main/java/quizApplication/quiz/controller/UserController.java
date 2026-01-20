@@ -12,8 +12,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import quizApplication.quiz.entity.ExamAttempt;
 import quizApplication.quiz.entity.Quiz;
+import quizApplication.quiz.entity.UserDetails;
 import quizApplication.quiz.repository.ExamAttemptRepository;
 import quizApplication.quiz.repository.QuizRepository;
+import quizApplication.quiz.repository.UserDetailsRepository;
 
 @Controller
 @RequestMapping("/user")
@@ -23,6 +25,8 @@ public class UserController {
 	private QuizRepository quizRepository;
     @Autowired
     private ExamAttemptRepository examAttemptRepo;
+    @Autowired
+    private UserDetailsRepository userDetailsRepository;
 	
     @GetMapping("/dashboard")
     public String userDashboard(Principal principal, RedirectAttributes redirectAttributes, Model model) {
@@ -32,7 +36,8 @@ public class UserController {
         }
 
         String username = principal.getName();
-        
+        UserDetails user = userDetailsRepository.findByUserid(username);
+        String fullName = user.getFirstName() + " " +  user.getLastName();
         
         ExamAttempt existingAttempt = examAttemptRepo.findByUsername(username);
         if (existingAttempt != null) {
@@ -45,6 +50,7 @@ public class UserController {
         	
         	List<Quiz> allQuizTypes =    quizRepository.findAll();
         	
+        	model.addAttribute("fullName", fullName);
         	model.addAttribute("quizTypes",allQuizTypes);
             
             return "userDashboard";
