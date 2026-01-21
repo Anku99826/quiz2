@@ -31,12 +31,28 @@
 			<div class="col-md-2">
 				<button class="btn btn-primary w-100">Filter</button>
 			</div>
-			<div class="mt-3 d-flex gap-2">
-			<a th:href="@{/admin/report/export/quiz-performance(quizType=${selectedQuiz})}"
-				class="btn btn-success"> Export CSV 
-			</a> 
-			<a href="/admin/reports" class="btn btn-outline-secondary"> ← Back to Dashboard </a>
-		</div>
+			<div class="mt-3 d-flex justify-content-between align-items-center">
+
+				<!-- Left side: Export buttons -->
+				<div class="d-flex gap-2">
+					<a
+						th:href="@{/admin/report/export/quiz-performance(quizType=${selectedQuiz})}"
+						class="btn btn-success"> <i class="fas fa-file-csv"></i>
+						Export CSV
+					</a> <a
+						th:href="@{/admin/report/export/quiz-performance/pdf(quizType=${selectedQuiz})}"
+						class="btn btn-danger"> <i class="fas fa-file-pdf"></i> Export
+						PDF
+					</a>
+				</div>
+
+				<!-- Right side: Back button -->
+				<a href="/admin/reports" class="btn btn-outline-secondary"> ←
+					Back </a>
+
+			</div>
+
+
 		</form>
 
 
@@ -46,7 +62,8 @@
 					<th>Quiz</th>
 					<th>Start Date</th>
 					<th>Total Marks</th>
-					<th>Attempts</th>
+					<th>Time Limit (mins)</th>
+					<th>Total Attempts</th>
 					<th>Avg</th>
 					<th>Max</th>
 					<th>Min</th>
@@ -59,9 +76,10 @@
 					<td th:text="${#temporals.format(r[1], 'dd-MM-yyyy')}"></td>
 					<td th:text="${r[2]}"></td>
 					<td th:text="${r[3]}"></td>
-					<td th:text="${#numbers.formatDecimal(r[4],1,2)}"></td>
-					<td th:text="${r[5]}"></td>
+					<td th:text="${r[4]}"></td>
+					<td th:text="${#numbers.formatDecimal(r[5],1,2)}"></td>
 					<td th:text="${r[6]}"></td>
+					<td th:text="${r[7]}"></td>
 				</tr>
 
 				<tr th:if="${#lists.isEmpty(reports)}">
@@ -72,7 +90,7 @@
 
 		</table>
 
-		
+
 
 	</div>
 

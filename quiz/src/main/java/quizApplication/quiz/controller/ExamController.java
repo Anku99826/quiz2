@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,9 +21,11 @@ import jakarta.servlet.http.HttpSession;
 import quizApplication.quiz.entity.ExamAttempt;
 import quizApplication.quiz.entity.Question;
 import quizApplication.quiz.entity.QuestionStatus;
+import quizApplication.quiz.entity.Quiz;
 import quizApplication.quiz.entity.UserDetails;
 import quizApplication.quiz.repository.ExamAttemptRepository;
 import quizApplication.quiz.repository.QuestionRepository;
+import quizApplication.quiz.repository.QuizRepository;
 import quizApplication.quiz.repository.UserDetailsRepository;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
@@ -41,8 +41,10 @@ public class ExamController {
     @Autowired
     private UserDetailsRepository userDetailsRepository;
 
+    @Autowired
+    private QuizRepository quizRepository;
     
-    private static final long EXAM_DURATION_MS = 30 * 60 * 1000; // 30 mins
+    //private static final long EXAM_DURATION_MS = 30 * 60 * 1000; // 30 mins
 
     @GetMapping("/home")
     public String backToLoginAfterSummaryPage(HttpSession session) {
@@ -56,7 +58,6 @@ public class ExamController {
                             Principal principal,
                             RedirectAttributes redirectAttributes) {
 
-        // 🔁 CHECK UNFINISHED EXAM
         ExamAttempt pending =
                 examAttemptRepo.findByUsernameAndCompletedFalse(principal.getName());
 
@@ -64,15 +65,23 @@ public class ExamController {
             return "redirect:/exam/resume";
         }
 
+        Quiz quiz = quizRepository.findByTitle(quizType)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+
         List<Question> questions = questionRepo.findByQuizType(quizType);
 
-        if (questions == null || questions.isEmpty()) {
+        if (questions.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "No questions available");
             return "redirect:/user/dashboard";
         }
 
-        // ⏱️ START TIMER
+        // ⏱️ TIMER SETUP (DYNAMIC)
+        long durationMs = quiz.getTimeLimit() * 60L * 1000L;
+
         session.setAttribute("EXAM_START_TIME", System.currentTimeMillis());
+        session.setAttribute("EXAM_DURATION_MS", durationMs);
+
+        // rest unchanged...
 
         // STATUS MAP
         Map<Integer, QuestionStatus> statusMap = new HashMap<>();
@@ -127,8 +136,14 @@ public class ExamController {
             return "redirect:/exam/instructions";
         }
 
+        Long durationMs = (Long) session.getAttribute("EXAM_DURATION_MS");
+
+        if (startTime == null || durationMs == null) {
+            return "redirect:/exam/instructions";
+        }
+
         long elapsed = System.currentTimeMillis() - startTime;
-        long remainingMillis = EXAM_DURATION_MS - elapsed;
+        long remainingMillis = durationMs - elapsed;
 
         if (remainingMillis <= 0) {
             return "redirect:/exam/submit";
@@ -149,11 +164,21 @@ public class ExamController {
         }
 
         // ---------------- ANSWERS ----------------
-        Map<Integer, String> answers =
-                (Map<Integer, String>) session.getAttribute("answers");
+        Map<Long, String> answers =
+                (Map<Long, String>) session.getAttribute("answers");
 
-        String selectedAnswer = answers != null ? answers.get(index) : null;
+        Question currentQuestion = questions.get(index);
+
+        String selectedAnswer = answers != null
+                ? answers.get(currentQuestion.getId())
+                : null;
+
         model.addAttribute("selectedAnswer", selectedAnswer);
+        if (answers == null) {
+            answers = new HashMap<>();
+            session.setAttribute("answers", answers);
+        }
+
 
         // ---------------- MARK VISITED ----------------
         QuestionStatus currentStatus = statusMap.get(index);
@@ -333,18 +358,25 @@ public class ExamController {
         Map<Integer, QuestionStatus> statusMap =
                 mapper.readValue(attempt.getStatusJson(),
                     new TypeReference<Map<Integer, QuestionStatus>>() {});
+        Quiz quiz = quizRepository.findByTitle(attempt.getQuizType())
+                .orElseThrow();
+
+        long durationMs = quiz.getTimeLimit() * 60L * 1000L;
+
+        long elapsed =
+            java.time.Duration.between(attempt.getStartedAt(), LocalDateTime.now()).toMillis();
+
+        session.setAttribute("EXAM_START_TIME",
+                System.currentTimeMillis() - elapsed);
+
+        session.setAttribute("EXAM_DURATION_MS", durationMs);
 
         session.setAttribute("questions", questions);
         session.setAttribute("answers", answers);
         session.setAttribute("statusMap", statusMap);
         session.setAttribute("currentQuestion", attempt.getCurrentQuestion());
 
-        // ⏱️ RESTORE TIMER
-        long elapsed =
-            java.time.Duration.between(attempt.getStartedAt(), LocalDateTime.now()).toMillis();
-
-        session.setAttribute("EXAM_START_TIME",
-                System.currentTimeMillis() - elapsed);
+     
 
         return "redirect:/exam/question?n=" + attempt.getCurrentQuestion();
     }

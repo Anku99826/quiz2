@@ -1,19 +1,18 @@
 package quizApplication.quiz.controller;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.Principal;
-import java.time.LocalDate;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,10 +30,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
+import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -45,6 +48,7 @@ import quizApplication.quiz.repository.ExamAttemptRepository;
 import quizApplication.quiz.repository.QuestionRepository;
 import quizApplication.quiz.repository.QuizRepository;
 import quizApplication.quiz.services.AdminUserService;
+import quizApplication.quiz.services.PdfService;
 import quizApplication.quiz.services.QuizService;
 import quizApplication.quiz.utility.CsvQuestionParser;
 import tools.jackson.core.type.TypeReference;
@@ -68,7 +72,9 @@ public class AdminController {
 	private QuizRepository quizRepository;
 	@Autowired
 	private ExamAttemptRepository examAttemptRepo;
-
+	@Autowired
+	private PdfService pdfService;
+	
 	public AdminController(AdminUserService service) {
 		this.service = service;
 	}
@@ -326,11 +332,24 @@ public class AdminController {
 	        @PathVariable String quizType,
 	        Model model) {
 
-	    model.addAttribute(
-	        "reports",
-	        examAttemptRepo.userPerformanceByQuiz(quizType)
-	    );
+	    // Get real data from repo
+	    List<Object[]> reports = examAttemptRepo.userPerformanceByQuiz(quizType);
 
+	    // --- TEMP: Add sample users if less than 100 for demo ---
+	    int currentCount = reports.size();
+	    LocalDateTime now = LocalDateTime.now();
+
+	    for (int i = currentCount + 1; i <= 100; i++) {
+	        String username = "user" + i;
+	        long totalAttempts = (long) (Math.random() * 10 + 1);
+	        long score = (long) (Math.random() * 100);
+	        LocalDateTime lastAttempt = now.minusDays((long) (Math.random() * 30));
+
+	        reports.add(new Object[]{username, totalAttempts, score, lastAttempt});
+	    }
+	    // ----------------------------------------------------------
+
+	    model.addAttribute("reports", reports);
 	    model.addAttribute("selectedQuiz", quizType);
 
 	    return "report-user-performance";
@@ -343,6 +362,7 @@ public class AdminController {
 		return "report-user-attempts";
 	}
 
+	//export as CSV
 	@GetMapping("/report/export/quiz-performance")
 	public void exportQuizPerformance(
 	        @RequestParam(required = false) String quizType,
@@ -357,7 +377,7 @@ public class AdminController {
 	    PrintWriter writer = response.getWriter();
 
 	    // CSV Header (matches new report)
-	    writer.println("Quiz,Start Date,Total Marks,Attempts,Avg Marks,Max Marks,Min Marks");
+	    writer.println("Quiz,Start Date,Total Marks, Time Limit(min),Total Attempts,Avg Marks,Max Marks,Min Marks");
 
 	    List<Object[]> reports = examAttemptRepo.quizPerformanceFiltered(quizType);
 
@@ -366,16 +386,281 @@ public class AdminController {
 	                r[0] + "," +                       // Quiz Title
 	                r[1] + "," +                       // Start Date
 	                r[2] + "," +                       // Total Marks
-	                r[3] + "," +                       // Attempts
-	                String.format("%.2f", r[4]) + "," +// Avg
-	                r[5] + "," +                       // Max
-	                r[6]                               // Min
+	                r[3] + "," +                       // Time Limit
+	                r[4] + "," +                       // Attempts
+	                String.format("%.2f", r[5]) + "," +// Avg
+	                r[6] + "," +                       // Max
+	                r[7]                               // Min
 	        );
 	    }
 
 	    writer.flush();
 	}
 
+	
+	//export quiz performance report as PDF
+	@GetMapping("/report/export/quiz-performance/pdf")
+	public void exportQuizPerformancePdf(
+	        @RequestParam(required = false) String quizType,
+	        HttpServletResponse response) throws Exception {
+
+	    response.setContentType("application/pdf");
+	    response.setHeader(
+	            "Content-Disposition",
+	            "attachment; filename=quiz-performance.pdf"
+	    );
+
+	    List<Object[]> reports = examAttemptRepo.quizPerformanceFiltered(quizType);
+
+	    Document document = new Document(PageSize.A4.rotate());
+	    PdfWriter.getInstance(document, response.getOutputStream());
+
+	    document.open();
+
+	    // Title
+	    Font titleFont = new Font(Font.HELVETICA, 16, Font.BOLD);
+	    Paragraph title = new Paragraph("Quiz Performance Report", titleFont);
+	    title.setAlignment(Element.ALIGN_CENTER);
+	    title.setSpacingAfter(20);
+	    document.add(title);
+
+	    // Table (same columns as CSV)
+	    PdfPTable table = new PdfPTable(7);
+	    table.setWidthPercentage(100);
+	    table.setSpacingBefore(10);
+	    table.setWidths(new float[]{3, 2, 2, 2, 2, 2, 2});
+
+	    Font headerFont = new Font(Font.HELVETICA, 10, Font.BOLD);
+	    Font dataFont = new Font(Font.HELVETICA, 10);
+
+	    addHeader(table, headerFont,
+	            "Quiz",
+	            "Start Date",
+	            "Total Marks",
+	            "Total Attempts",
+	            "Avg Marks",
+	            "Max Marks",
+	            "Min Marks"
+	    );
+
+	    for (Object[] r : reports) {
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(r[0]), dataFont)));
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(r[1]), dataFont)));
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(r[2]), dataFont)));
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(r[3]), dataFont)));
+	        Number avg = (Number) r[4];
+	        table.addCell(new PdfPCell(new Phrase(String.format("%.2f", avg.doubleValue()), dataFont)));
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(r[5]), dataFont)));
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(r[6]), dataFont)));
+	    }
+
+	    document.add(table);
+	    document.close();
+	}
+
+	//Helper method for PDF export
+	private void addHeader(PdfPTable table, Font font, String... headers) {
+	    for (String h : headers) {
+	        PdfPCell cell = new PdfPCell(new Phrase(h, font));
+	        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+	        cell.setBackgroundColor(Color.LIGHT_GRAY);
+	        table.addCell(cell);
+	    }
+	}
+
+	//export user performance report as PDF
+	@GetMapping("/report/export/user-performance/pdf")
+	public void exportUserPerformancePdf(
+	        @RequestParam(required = false) String quizType,
+	        HttpServletResponse response) throws Exception {
+
+	    response.setContentType("application/pdf");
+	    response.setHeader(
+	            "Content-Disposition",
+	            "attachment; filename=user-performance.pdf"
+	    );
+
+	    // Fetch real user performance data
+	    List<Object[]> reports = examAttemptRepo.userPerformanceByQuiz(quizType);
+
+	    // Optional: add sample users for testing if needed
+	    int currentCount = reports.size();
+	    LocalDateTime now = LocalDateTime.now();
+	    for (int i = currentCount + 1; i <= 100; i++) {
+	        String username = "user" + i;
+	        long totalAttempts = 1;          // Usually 1 attempt
+	        int score = (int) (Math.random() * 100);
+	        LocalDateTime lastAttempt = now.minusDays((long) (Math.random() * 30));
+	        String quizTitle = quizType;     // same quiz
+	        reports.add(new Object[]{username, totalAttempts, score, lastAttempt, quizTitle});
+	    }
+
+	    // Initialize PDF
+	    Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
+	    PdfWriter.getInstance(document, response.getOutputStream());
+	    document.open();
+
+	    // --- Heading (like frontend) ---
+	    Font headingFont = new Font(Font.HELVETICA, 16, Font.BOLD);
+	    Paragraph heading = new Paragraph("User Performance", headingFont);
+	    heading.setAlignment(Element.ALIGN_LEFT);
+
+	    // Quiz name in muted smaller font
+	    Font quizFont = new Font(Font.HELVETICA, 12, Font.NORMAL, Color.GRAY);
+	    Paragraph quizName = new Paragraph("(" + quizType + ")", quizFont);
+	    quizName.setAlignment(Element.ALIGN_LEFT);
+	    quizName.setSpacingAfter(15);
+
+	    document.add(heading);
+	    document.add(quizName);
+
+	    // --- Table ---
+	    PdfPTable table = new PdfPTable(6);
+	    table.setWidthPercentage(100);
+	    table.setWidths(new float[]{1, 3, 2, 2, 3, 3});
+
+	    Font headerFont = new Font(Font.HELVETICA, 10, Font.BOLD);
+	    Font dataFont = new Font(Font.HELVETICA, 10);
+
+	    // Header row
+	    String[] headers = {"#", "Username", "Total Attempts", "Score", "Last Attempt", "Quiz Title"};
+	    for (String h : headers) {
+	        PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
+	        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+	        cell.setBackgroundColor(Color.LIGHT_GRAY);
+	        table.addCell(cell);
+	    }
+
+	 // Data rows
+	    int count = 1;
+	    for (Object[] u : reports) {
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(count++), dataFont))); // #
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(u[0]), dataFont)));     // Username
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(u[1]), dataFont)));     // Total Attempts
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(u[2]), dataFont)));     // Score
+
+	        LocalDateTime lastAttempt = (LocalDateTime) u[3];
+	        table.addCell(new PdfPCell(
+	                new Phrase(lastAttempt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")), dataFont)
+	        ));
+
+	        // Quiz Title: use u[4] if exists, else fallback to quizType
+	        String quizTitle;
+	        if (u.length > 4 && u[4] != null) {
+	            quizTitle = String.valueOf(u[4]);
+	        } else {
+	            quizTitle = quizType;
+	        }
+	        table.addCell(new PdfPCell(new Phrase(quizTitle, dataFont)));
+	    }
+
+	    document.add(table);
+	    document.close();
+	}
+
+//export user performance report as CSV
+	@GetMapping("/report/export/user-performance")
+	public void exportUserPerformanceCsv(
+	        @RequestParam(required = false) String quizType,
+	        HttpServletResponse response) throws IOException {
+
+	    // Set CSV content type
+	    response.setContentType("text/csv");
+	    response.setHeader(
+	            "Content-Disposition",
+	            "attachment; filename=user-performance.csv"
+	    );
+
+	    PrintWriter writer = response.getWriter();
+
+	    // CSV Header
+	    writer.println("Index,Username,Total Attempts,Score,Last Attempt,Quiz Title");
+
+	    // Fetch real data
+	    List<Object[]> reports = examAttemptRepo.userPerformanceByQuiz(quizType);
+
+	    // Optional: add sample users if less than 100
+	    int currentCount = reports.size();
+	    LocalDateTime now = LocalDateTime.now();
+	    for (int i = currentCount + 1; i <= 100; i++) {
+	        String username = "user" + i;
+	        long totalAttempts = 1;
+	        long score = (long) (Math.random() * 100);
+	        LocalDateTime lastAttempt = now.minusDays((long) (Math.random() * 30));
+	        String quizTitle = quizType;
+	        reports.add(new Object[]{username, totalAttempts, score, lastAttempt, quizTitle});
+	    }
+
+	    // Write CSV rows
+	    int index = 1;
+	    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+
+	    for (Object[] u : reports) {
+	        String quizTitle;
+	        if (u.length > 4 && u[4] != null) {
+	            quizTitle = String.valueOf(u[4]);
+	        } else {
+	            quizTitle = quizType;
+	        }
+
+	        String lastAttemptStr = "";
+	        if (u[3] instanceof LocalDateTime) {
+	            lastAttemptStr = ((LocalDateTime) u[3]).format(dtf);
+	        }
+
+	        writer.println(
+	                index++ + "," +
+	                u[0] + "," +              // Username
+	                u[1] + "," +              // Total Attempts
+	                u[2] + "," +              // Score
+	                lastAttemptStr + "," +    // Last Attempt
+	                quizTitle                 // Quiz Title
+	        );
+	    }
+
+	    writer.flush();
+	}
+
+	
+	
+	// get TOP N users
+	
+	@GetMapping("/report/export/user-performance/top/{topN}")
+	public void exportTopUsersPdf(@PathVariable int topN,
+	                              @RequestParam String quizType,
+	                              HttpServletResponse response) throws Exception {
+
+	    List<ExamAttempt> attempts = examAttemptRepo.findByQuizTypeAndCompletedTrue(quizType);
+
+	    // Aggregate by user: max score, lowest time
+	    Map<String, ExamAttempt> topAttempts = new HashMap<>();
+	    for (ExamAttempt a : attempts) {
+	        String user = a.getUsername();
+	        long timeTaken = Duration.between(a.getStartedAt(), a.getSubmittedAt()).getSeconds();
+	        if (!topAttempts.containsKey(user)) topAttempts.put(user, a);
+	        else {
+	            ExamAttempt existing = topAttempts.get(user);
+	            long existingTime = Duration.between(existing.getStartedAt(), existing.getSubmittedAt()).getSeconds();
+	            if (a.getScore() > existing.getScore() || (a.getScore().equals(existing.getScore()) && timeTaken < existingTime)) {
+	                topAttempts.put(user, a);
+	            }
+	        }
+	    }
+
+	    // Sort and limit
+	    List<ExamAttempt> topUsers = topAttempts.values().stream()
+	            .sorted(Comparator.comparing(ExamAttempt::getScore).reversed()
+	                    .thenComparing(a -> Duration.between(a.getStartedAt(), a.getSubmittedAt())))
+	            .limit(topN)
+	            .toList();
+
+	    // Send PDF
+	    response.setContentType("application/pdf");
+	    response.setHeader("Content-Disposition", "attachment; filename=top_" + topN + "_users.pdf");
+	    pdfService.generateTopUsersPdf(topUsers, response.getOutputStream());
+	}
+
+	
 	@GetMapping("/reports/attempt/{id}/pdf")
 	public void downloadAttemptPdf(@PathVariable Long id,
 	                               HttpServletResponse response) throws Exception {

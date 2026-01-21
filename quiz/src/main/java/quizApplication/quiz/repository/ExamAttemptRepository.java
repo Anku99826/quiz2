@@ -13,7 +13,8 @@ import quizApplication.quiz.entity.ExamAttempt;
 public interface ExamAttemptRepository extends JpaRepository<ExamAttempt, Long> {
 
 	ExamAttempt findByUsername(String username);
-	ExamAttempt findByUsernameAndCompletedFalse(String username); 
+	ExamAttempt findByUsernameAndCompletedFalse(String username);
+	List<ExamAttempt> findByQuizTypeAndCompletedTrue(String quizType);
 	
 	@Query("SELECT COUNT(DISTINCT e.quizType) FROM ExamAttempt e")
 	long totalQuizzes();
@@ -55,6 +56,7 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttempt, Long> 
 		    SELECT q.title,
 		           q.startDate,
 		           q.totalMarks,
+		           q.timeLimit,
 		           COUNT(e),
 		           COALESCE(AVG(e.score), 0),
 		           COALESCE(MAX(e.score), 0),

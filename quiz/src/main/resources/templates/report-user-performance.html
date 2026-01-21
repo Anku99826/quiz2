@@ -20,22 +20,63 @@
 <div class="container mt-4">
 
    
-<div class="d-flex justify-content-between align-items-center mb-3">
-	 <h3>
+<!-- Heading -->
+<h3>
     User Performance
     <small class="text-muted" th:text="'(' + ${selectedQuiz} + ')'"></small>
 </h3>
-	
+<!-- Top N Users PDF Buttons -->
+<div class="d-flex gap-2">
+    <a th:href="@{/admin/report/export/user-performance/top/5(quizType=${selectedQuiz})}" 
+       class="btn btn-warning">
+        <i class="fas fa-star"></i> Top 5 Users
+    </a>
 
-			<a href="/admin/reports/user-performance" class="btn btn-outline-secondary mt-3"> ←	Back to Quiz Selection </a>
-		</div>
+    <a th:href="@{/admin/report/export/user-performance/top/10(quizType=${selectedQuiz})}" 
+       class="btn btn-warning">
+        <i class="fas fa-star"></i> Top 10 Users
+    </a>
+
+    <a th:href="@{/admin/report/export/user-performance/top/20(quizType=${selectedQuiz})}" 
+       class="btn btn-warning">
+        <i class="fas fa-star"></i> Top 20 Users
+    </a>
+</div>
+
+<!-- Buttons row -->
+<div class="d-flex justify-content-between align-items-center mt-2 mb-3">
+
+    <!-- Left side: Export CSV + PDF -->
+    <div class="d-flex gap-2">
+        <a th:href="@{/admin/report/export/user-performance(quizType=${selectedQuiz})}"
+           class="btn btn-success">
+            <i class="fas fa-file-csv"></i> Export CSV
+        </a>
+
+        <a th:href="@{/admin/report/export/user-performance/pdf(quizType=${selectedQuiz})}"
+           class="btn btn-danger">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </a>
+    </div>
+
+    <!-- Right side: Back button -->
+    <a href="/admin/reports/user-performance"
+       class="btn btn-outline-secondary">
+        ← Back
+    </a>
+
+</div>
+
+
 
 
 
     <div class="card shadow mt-3">
-        <div class="card-body p-0">
+    <div class="card-body p-0">
 
-            <table class="table table-hover table-striped mb-0">
+        <!-- Scrollable table for many users -->
+        <div style="max-height: 500px; overflow-y: auto;">
+    <table class="table table-hover table-striped mb-0">
                 <thead class="table-dark text-center">
                     <tr>
                         <th>#</th>
@@ -48,14 +89,14 @@
                 </thead>
 
                 <tbody class="text-center">
+
+                    <!-- Thymeleaf loop over reports -->
                     <tr th:each="u, stat : ${reports}">
                         <td th:text="${stat.count}"></td>
                         <td th:text="${u[0]}"></td>
                         <td th:text="${u[1]}"></td>
                         <td th:text="${#numbers.formatDecimal(u[2], 0, 0)}"></td>
                         <td th:text="${#temporals.format(u[3],'dd-MM-yyyy HH:mm')}"></td>
-
-
                         <td>
                             <a class="btn btn-sm btn-primary"
                                th:href="@{/admin/reports/user/{username}(username=${u[0]})}">
@@ -64,17 +105,20 @@
                         </td>
                     </tr>
 
+                    <!-- Example fallback if reports empty -->
                     <tr th:if="${#lists.isEmpty(reports)}">
                         <td colspan="6" class="text-muted">
                             No user performance data found
                         </td>
                     </tr>
+
                 </tbody>
-
             </table>
-
         </div>
+
     </div>
+</div>
+
 			
 
 </div>
