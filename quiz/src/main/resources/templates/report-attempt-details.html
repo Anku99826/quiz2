@@ -1,189 +1,192 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <meta charset="UTF-8">
-    <title>Attempt Details</title>
+<meta charset="UTF-8">
+<title>Attempt Details</title>
 
-    <link rel="stylesheet" th:href="@{/css/local/adminDashboard.css}">
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/all.min.css">
+<link rel="stylesheet" th:href="@{/css/local/adminDashboard.css}">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/all.min.css">
 
-    <script src="/js/bootstrap.bundle.min.js" defer></script>
+<script src="/js/bootstrap.bundle.min.js" defer></script>
 
-    <!-- Compact Report Styles -->
-    <style>
-        .report-question {
-            background: #fafafa;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
+<!-- Compact Report Styles -->
+<style>
+.report-question {
+	background: #fafafa;
+	border: 1px solid #ddd;
+	border-radius: 6px;
+	padding: 10px;
+	margin-bottom: 10px;
+	font-size: 14px;
+}
 
-        .report-question:hover {
-            background: #f4f4f4;
-        }
+.report-question:hover {
+	background: #f4f4f4;
+}
 
-        .option {
-            padding: 2px 6px;
-        }
+.option {
+	padding: 2px 6px;
+}
 
-        .correct {
-            color: #198754;
-            font-weight: 600;
-        }
+.correct {
+	color: #198754;
+	font-weight: 600;
+}
 
-        .wrong {
-            color: #dc3545;
-        }
+.wrong {
+	color: #dc3545;
+}
 
-        .meta-text {
-            font-size: 13px;
-            color: #6c757d;
-        }
-    </style>
+.meta-text {
+	font-size: 13px;
+	color: #6c757d;
+}
+</style>
 </head>
 
 <body>
 
-<!-- Admin Layout -->
-<div th:insert="fragments/adminLayout :: adminLayout">...</div>
+	<!-- Admin Layout -->
+	<div th:insert="fragments/adminLayout :: adminLayout">...</div>
 
-<!-- Page Content -->
-<div class="container mt-4">
+	<!-- Page Content -->
+	<div class="container mt-4">
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Attempt Details</h4>
+		<!-- Header -->
+		<div class="d-flex justify-content-between align-items-center mb-3">
+			<h4 class="mb-0">Attempt Details</h4>
 
-        <a href="/admin/reports/user-performance"
-           class="btn btn-outline-secondary btn-sm">
-            ← Back
-        </a>
-    </div>
+			<a href="/admin/reports/user-performance"
+				class="btn btn-outline-secondary btn-sm"> ← Back </a>
+		</div>
 
-    <!-- Attempt Meta -->
-    <div class="card mb-3 shadow-sm">
-        <div class="card-body py-2">
-            <div class="row small">
-                <div class="col-md-3">
-                    <b>User:</b> <span th:text="${attempt.username}"></span>
-                </div>
-                <div class="col-md-3">
-                    <b>Quiz:</b> <span th:text="${attempt.quizType}"></span>
-                </div>
-                <div class="col-md-3">
-                    <b>Score:</b> <span th:text="${attempt.score}"></span>
-                </div>
-                <div class="col-md-3">
-                    <b>Submitted:</b>
-                    <span th:text="${#temporals.format(attempt.submittedAt,'dd-MM-yyyy HH:mm')}"></span>
-                </div>
-            </div>
-        </div>
-    </div>
+		<!-- Attempt Meta -->
+		<!-- User Details -->
+		<div class="card mb-3 shadow-sm" th:if="${userDetails != null}">
+			<div class="card-body py-2">
+				<h6 class="mb-2">User Details</h6>
 
-    <!-- Legend -->
-    <div class="mb-2 small">
-        <span class="badge bg-success me-2">Correct</span>
-        <span class="badge bg-danger">Wrong</span>
-    </div>
+				<div class="row small">
+					<div class="col-md-3">
+						<b>User ID:</b> <span th:text="${userDetails.userid}"></span>
+					</div>
+					<div class="col-md-3">
+						<b>Name:</b> <span
+							th:text="${userDetails.firstName + ' ' + userDetails.lastName}"></span>
+					</div>
+					<div class="col-md-3">
+						<b>Email:</b> <span th:text="${userDetails.email}"></span>
+					</div>
+					<div class="col-md-3">
+						<b>Department:</b> <span th:text="${userDetails.department}"></span>
+					</div>
+				</div>
 
-
-<div class="mb-3 d-flex gap-2">
-    <button class="btn btn-sm btn-outline-primary"
-            onclick="filterQuestions('all')">
-        All
-    </button>
-
-    <button class="btn btn-sm btn-outline-success"
-            onclick="filterQuestions('correct')">
-        Correct
-    </button>
-
-    <button class="btn btn-sm btn-outline-danger"
-            onclick="filterQuestions('wrong')">
-        Wrong
-    </button>
-
-    <!-- PDF Export -->
-    <a th:href="@{/admin/reports/attempt/{id}/pdf(id=${attempt.id})}"
-       class="btn btn-sm btn-outline-dark ms-auto">
-        <i class="fa fa-file-pdf"></i> Export PDF
-    </a>
-</div>
+				<div class="row small mt-1">
+					<div class="col-md-3">
+						<b>Designation:</b> <span th:text="${userDetails.designation}"></span>
+					</div>
+					<div class="col-md-3">
+						<b>Scale:</b> <span th:text="${userDetails.scale}"></span>
+					</div>
+					<div class="col-md-3">
+						<b>Location:</b> <span th:text="${userDetails.location}"></span>
+					</div>
+				</div>
+			</div>
+		</div>
 
 
-    <!-- Questions -->
-    <div th:each="q, stat : ${questions}"
-     class="report-question"
-     th:attr="data-status=${q.correctAnswer == answers[q.id] ? 'correct' : 'wrong'}">
+		<!-- Legend -->
+		<div class="mb-2 small">
+			<span class="badge bg-success me-2">Correct</span> <span
+				class="badge bg-danger">Wrong</span>
+		</div>
 
 
-        <!-- Question Header -->
-        <div class="d-flex justify-content-between align-items-start mb-1">
-            <div class="fw-semibold">
-                Q<span th:text="${q.id}"></span>.
-                <span th:text="${q.questionText}"></span>
-            </div>
+		<div class="mb-3 d-flex gap-2">
+			<button class="btn btn-sm btn-outline-primary"
+				onclick="filterQuestions('all')">All</button>
 
-            <span class="badge"
-                  th:classappend="${q.correctAnswer == answers[q.id]}
+			<button class="btn btn-sm btn-outline-success"
+				onclick="filterQuestions('correct')">Correct</button>
+
+			<button class="btn btn-sm btn-outline-danger"
+				onclick="filterQuestions('wrong')">Wrong</button>
+
+			<!-- PDF Export -->
+			<a th:href="@{/admin/reports/attempt/{id}/pdf(id=${attempt.id})}"
+				class="btn btn-sm btn-outline-dark ms-auto"> <i
+				class="fa fa-file-pdf"></i> Export PDF
+			</a>
+		</div>
+
+
+		<!-- Questions -->
+		<div th:each="q, stat : ${questions}" class="report-question"
+			th:attr="data-status=${q.correctAnswer == answers[q.id] ? 'correct' : 'wrong'}">
+
+
+			<!-- Question Header -->
+			<div class="d-flex justify-content-between align-items-start mb-1">
+				<div class="fw-semibold">
+					Q<span th:text="${q.id}"></span>. <span th:text="${q.questionText}"></span>
+				</div>
+
+				<span class="badge"
+					th:classappend="${q.correctAnswer == answers[q.id]}
                         ? 'bg-success'
                         : 'bg-danger'">
-                <span th:text="${q.correctAnswer == answers[q.id] ? 'Correct' : 'Wrong'}"></span>
-            </span>
-        </div>
+					<span
+					th:text="${q.correctAnswer == answers[q.id] ? 'Correct' : 'Wrong'}"></span>
+				</span>
+			</div>
 
-        <!-- Options -->
-        <div class="row">
-            <div class="col-md-6 option"
-                 th:classappend="${q.correctAnswer == 'A'} ? 'correct' :
+			<!-- Options -->
+			<div class="row">
+				<div class="col-md-6 option"
+					th:classappend="${q.correctAnswer == 'A'} ? 'correct' :
                  (${answers[q.id] == 'A'} ? 'wrong' : '')">
-                A. <span th:text="${q.optionA}"></span>
-            </div>
+					A. <span th:text="${q.optionA}"></span>
+				</div>
 
-            <div class="col-md-6 option"
-                 th:classappend="${q.correctAnswer == 'B'} ? 'correct' :
+				<div class="col-md-6 option"
+					th:classappend="${q.correctAnswer == 'B'} ? 'correct' :
                  (${answers[q.id] == 'B'} ? 'wrong' : '')">
-                B. <span th:text="${q.optionB}"></span>
-            </div>
+					B. <span th:text="${q.optionB}"></span>
+				</div>
 
-            <div class="col-md-6 option"
-                 th:classappend="${q.correctAnswer == 'C'} ? 'correct' :
+				<div class="col-md-6 option"
+					th:classappend="${q.correctAnswer == 'C'} ? 'correct' :
                  (${answers[q.id] == 'C'} ? 'wrong' : '')">
-                C. <span th:text="${q.optionC}"></span>
-            </div>
+					C. <span th:text="${q.optionC}"></span>
+				</div>
 
-            <div class="col-md-6 option"
-                 th:classappend="${q.correctAnswer == 'D'} ? 'correct' :
+				<div class="col-md-6 option"
+					th:classappend="${q.correctAnswer == 'D'} ? 'correct' :
                  (${answers[q.id] == 'D'} ? 'wrong' : '')">
-                D. <span th:text="${q.optionD}"></span>
-            </div>
-        </div>
+					D. <span th:text="${q.optionD}"></span>
+				</div>
+			</div>
 
-        <!-- Answer Summary -->
-        <div class="meta-text mt-1">
-            Your Answer:
-            <b th:text="${answers[q.id]}"></b>
-            |
-            Correct:
-            <b th:text="${q.correctAnswer}"></b>
-        </div>
+			<!-- Answer Summary -->
+			<div class="meta-text mt-1">
+				Your Answer: <b th:text="${answers[q.id]}"></b> | Correct: <b
+					th:text="${q.correctAnswer}"></b>
+			</div>
 
-    </div>
+		</div>
 
-    <!-- Empty State -->
-    <div th:if="${#lists.isEmpty(questions)}"
-         class="alert alert-warning text-center">
-        No questions found for this attempt
-    </div>
+		<!-- Empty State -->
+		<div th:if="${#lists.isEmpty(questions)}"
+			class="alert alert-warning text-center">No questions found for
+			this attempt</div>
 
-</div>
-<script>
+	</div>
+	<script>
     function filterQuestions(type) {
         const questions = document.querySelectorAll('.report-question');
 

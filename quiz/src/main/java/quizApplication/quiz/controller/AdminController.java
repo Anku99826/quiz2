@@ -7,8 +7,10 @@ import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +38,7 @@ import com.lowagie.text.FontFactory;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
+import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
@@ -44,9 +47,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import quizApplication.quiz.entity.ExamAttempt;
 import quizApplication.quiz.entity.Question;
 import quizApplication.quiz.entity.Quiz;
+import quizApplication.quiz.entity.UserDetails;
 import quizApplication.quiz.repository.ExamAttemptRepository;
 import quizApplication.quiz.repository.QuestionRepository;
 import quizApplication.quiz.repository.QuizRepository;
+import quizApplication.quiz.repository.UserDetailsRepository;
 import quizApplication.quiz.services.AdminUserService;
 import quizApplication.quiz.services.PdfService;
 import quizApplication.quiz.services.QuizService;
@@ -74,6 +79,8 @@ public class AdminController {
 	private ExamAttemptRepository examAttemptRepo;
 	@Autowired
 	private PdfService pdfService;
+	@Autowired
+	private UserDetailsRepository userDetailsRepository;
 	
 	public AdminController(AdminUserService service) {
 		this.service = service;
@@ -281,28 +288,30 @@ public class AdminController {
 	@GetMapping("/reports/attempt/{id}")
 	public String attemptDetails(@PathVariable Long id, Model model) throws Exception {
 
-		ExamAttempt attempt = examAttemptRepo.findById(id).orElseThrow();
+	    ExamAttempt attempt = examAttemptRepo.findById(id).orElseThrow();
 
-		ObjectMapper mapper = new ObjectMapper();
+	    ObjectMapper mapper = new ObjectMapper();
+	    Map<String, String> rawAnswers =
+	            mapper.readValue(attempt.getAnswersJson(),
+	                    new TypeReference<Map<String, String>>() {});
 
-		Map<String, String> rawAnswers = mapper.readValue(attempt.getAnswersJson(),
-				new TypeReference<Map<String, String>>() {
-				});
+	    Map<Long, String> answers = new HashMap<>();
+	    for (Map.Entry<String, String> e : rawAnswers.entrySet()) {
+	        answers.put(Long.valueOf(e.getKey()), e.getValue());
+	    }
 
-		Map<Long, String> answers = new HashMap<>();
-		for (Map.Entry<String, String> e : rawAnswers.entrySet()) {
-			answers.put(Long.valueOf(e.getKey()), e.getValue());
-		}
+	    List<Question> questions = questionRepo.findAllById(answers.keySet());
 
-		List<Question> questions = questionRepo.findAllById(answers.keySet());
+	    // ✅ Fetch user details
+	    UserDetails userDetails =
+	            userDetailsRepository.findByUserid(attempt.getUsername());
 
-		System.err.println(attempt.getAnswersJson());
+	    model.addAttribute("attempt", attempt);
+	    model.addAttribute("questions", questions);
+	    model.addAttribute("answers", answers);
+	    model.addAttribute("userDetails", userDetails); // ✅
 
-		model.addAttribute("attempt", attempt);
-		model.addAttribute("questions", questions);
-		model.addAttribute("answers", answers);
-
-		return "report-attempt-details";
+	    return "report-attempt-details";
 	}
 
 	@GetMapping("/reports/quiz-performance")
@@ -535,21 +544,36 @@ public class AdminController {
 	    int count = 1;
 	    for (Object[] u : reports) {
 	        table.addCell(new PdfPCell(new Phrase(String.valueOf(count++), dataFont))); // #
-	        table.addCell(new PdfPCell(new Phrase(String.valueOf(u[0]), dataFont)));     // Username
-	        table.addCell(new PdfPCell(new Phrase(String.valueOf(u[1]), dataFont)));     // Total Attempts
-	        table.addCell(new PdfPCell(new Phrase(String.valueOf(u[2]), dataFont)));     // Score
 
-	        LocalDateTime lastAttempt = (LocalDateTime) u[3];
-	        table.addCell(new PdfPCell(
+	        // Username: Check if u[0] is null
+	        String username = (u[0] != null) ? String.valueOf(u[0]) : "NA";
+	        table.addCell(new PdfPCell(new Phrase(username, dataFont)));
+
+	        // Total Attempts: u[1] should ideally always be present based on context
+	        table.addCell(new PdfPCell(new Phrase(String.valueOf(u[1]), dataFont)));
+
+	        // Score: Check if u[2] is null
+	        String score = (u[2] != null) ? String.valueOf(u[2]) : "NA";
+	        table.addCell(new PdfPCell(new Phrase(score, dataFont)));
+
+	        // Last Attempt: Check if u[3] is null
+	        if (u[3] != null) {
+	            LocalDateTime lastAttempt = (LocalDateTime) u[3];
+	            table.addCell(new PdfPCell(
 	                new Phrase(lastAttempt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")), dataFont)
-	        ));
+	            ));
+	        } else {
+	            table.addCell(new PdfPCell(new Phrase("NA", dataFont)));
+	        }
 
-	        // Quiz Title: use u[4] if exists, else fallback to quizType
+	        // Quiz Title: use u[4] if exists and is not null, else fallback to quizType, else fallback to "NA"
 	        String quizTitle;
 	        if (u.length > 4 && u[4] != null) {
 	            quizTitle = String.valueOf(u[4]);
-	        } else {
+	        } else if (quizType != null) { // Assume quizType is defined elsewhere
 	            quizTitle = quizType;
+	        } else {
+	            quizTitle = "NA";
 	        }
 	        table.addCell(new PdfPCell(new Phrase(quizTitle, dataFont)));
 	    }
@@ -669,55 +693,82 @@ public class AdminController {
 	    ExamAttempt attempt = examAttemptRepo.findById(id)
 	            .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
-	    // 2️⃣ Parse answers JSON (same logic as UI)
-	    ObjectMapper mapper = new ObjectMapper();
+	    // 2️⃣ Fetch user details
+	    UserDetails userDetails =
+	            userDetailsRepository.findByUserid(attempt.getUsername());
 
+	    // 3️⃣ Parse answers JSON
+	    ObjectMapper mapper = new ObjectMapper();
 	    Map<String, String> rawAnswers = mapper.readValue(
 	            attempt.getAnswersJson(),
 	            new TypeReference<Map<String, String>>() {}
 	    );
 
-	    Map<Long, String> answers = new HashMap<>();
+	    Map<Long, String> answers = new LinkedHashMap<>();
 	    for (Map.Entry<String, String> e : rawAnswers.entrySet()) {
 	        answers.put(Long.valueOf(e.getKey()), e.getValue());
 	    }
 
-	    // 3️⃣ Fetch only attempted questions
-	    List<Question> questions = questionRepo.findAllById(answers.keySet());
+	    // 4️⃣ Fetch attempted questions (order preserved)
+	    List<Long> questionIds = new ArrayList<>(answers.keySet());
+	    List<Question> questions = questionRepo.findAllById(questionIds);
 
-	    // 4️⃣ HTTP response config
+	    // 5️⃣ HTTP response config
 	    response.setContentType("application/pdf");
-	    response.setHeader("Content-Disposition",
-	            "attachment; filename=attempt-" + id + ".pdf");
+	    response.setHeader(
+	            "Content-Disposition",
+	            "attachment; filename=attempt-" + id + ".pdf"
+	    );
 
-	    // 5️⃣ PDF setup
-	    Document document = new Document(PageSize.A4);
+	    // 6️⃣ PDF setup (Landscape to match UI)
+	    Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
 	    PdfWriter.getInstance(document, response.getOutputStream());
 	    document.open();
 
-	    // 6️⃣ Fonts
-	    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
-	    Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+	    // 7️⃣ Fonts
+	    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+	    Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
 	    Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+	    Font correctFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.GREEN);
+	    Font wrongFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.RED);
 
-	    // 7️⃣ Title
+	    // 8️⃣ Title
 	    document.add(new Paragraph("Exam Attempt Report", titleFont));
 	    document.add(Chunk.NEWLINE);
 
 	    DateTimeFormatter formatter =
 	            DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 
-	    // 8️⃣ Attempt meta
-	    document.add(new Paragraph("User: " + attempt.getUsername(), normalFont));
-	    document.add(new Paragraph("Quiz: " + attempt.getQuizType(), normalFont));
-	    document.add(new Paragraph("Score: " + attempt.getScore(), normalFont));
-	    document.add(new Paragraph(
-	            "Submitted At: " + attempt.getSubmittedAt().format(formatter),
-	            normalFont));
+	    // 9️⃣ User + Attempt Meta (matches frontend card)
+	    PdfPTable meta = new PdfPTable(4);
+	    meta.setWidthPercentage(100);
+	    meta.setSpacingAfter(12);
 
-	    document.add(Chunk.NEWLINE);
+	    meta.addCell("User ID");
+	    meta.addCell(attempt.getUsername());
+	    meta.addCell("Name");
+	    meta.addCell(userDetails != null
+	            ? userDetails.getFirstName() + " " + userDetails.getLastName()
+	            : "NA");
 
-	    // 9️⃣ Questions
+	    meta.addCell("Email");
+	    meta.addCell(userDetails != null ? userDetails.getEmail() : "NA");
+	    meta.addCell("Department");
+	    meta.addCell(userDetails != null ? userDetails.getDepartment() : "NA");
+
+	    meta.addCell("Quiz");
+	    meta.addCell(attempt.getQuizType());
+	    meta.addCell("Score");
+	    meta.addCell(String.valueOf(attempt.getScore()));
+
+	    meta.addCell("Submitted At");
+	    meta.addCell(attempt.getSubmittedAt().format(formatter));
+	    meta.addCell("");
+	    meta.addCell("");
+
+	    document.add(meta);
+
+	    // 🔟 Questions (UI-aligned blocks)
 	    int qNo = 1;
 
 	    for (Question q : questions) {
@@ -726,29 +777,45 @@ public class AdminController {
 	        boolean correct =
 	                userAnswer != null && userAnswer.equals(q.getCorrectAnswer());
 
-	        document.add(new Paragraph(
-	                "Q" + qNo++ + ". " + q.getQuestionText(),
-	                headerFont));
+	        PdfPTable qTable = new PdfPTable(2);
+	        qTable.setWidthPercentage(100);
+	        qTable.setSpacingBefore(6);
+	        qTable.setSpacingAfter(10);
 
-	        document.add(new Paragraph("A. " + q.getOptionA(), normalFont));
-	        document.add(new Paragraph("B. " + q.getOptionB(), normalFont));
-	        document.add(new Paragraph("C. " + q.getOptionC(), normalFont));
-	        document.add(new Paragraph("D. " + q.getOptionD(), normalFont));
+	        PdfPCell qHeader = new PdfPCell(
+	                new Phrase("Q" + qNo++ + ". " + q.getQuestionText(), headerFont));
+	        qHeader.setColspan(2);
+	        qHeader.setBorder(Rectangle.NO_BORDER);
+	        qTable.addCell(qHeader);
 
-	        document.add(new Paragraph(
-	                "Your Answer: " +
-	                        (userAnswer != null ? userAnswer : "Not Answered"),
-	                normalFont));
+	        qTable.addCell("A. " + q.getOptionA());
+	        qTable.addCell("");
 
-	        document.add(new Paragraph(
-	                "Correct Answer: " + q.getCorrectAnswer(),
-	                normalFont));
+	        qTable.addCell("B. " + q.getOptionB());
+	        qTable.addCell("");
 
-	        document.add(new Paragraph(
-	                "Result: " + (correct ? "Correct" : "Wrong"),
-	                normalFont));
+	        qTable.addCell("C. " + q.getOptionC());
+	        qTable.addCell("");
 
-	        document.add(Chunk.NEWLINE);
+	        qTable.addCell("D. " + q.getOptionD());
+	        qTable.addCell("");
+
+	        qTable.addCell("Your Answer");
+	        qTable.addCell(userAnswer != null ? userAnswer : "Not Answered");
+
+	        qTable.addCell("Correct Answer");
+	        qTable.addCell(q.getCorrectAnswer());
+
+	        PdfPCell resultCell = new PdfPCell(
+	                new Phrase(correct ? "Correct" : "Wrong",
+	                        correct ? correctFont : wrongFont));
+	        resultCell.setColspan(2);
+	        resultCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+	        resultCell.setBorder(Rectangle.NO_BORDER);
+
+	        qTable.addCell(resultCell);
+
+	        document.add(qTable);
 	    }
 
 	    document.close();

@@ -24,41 +24,38 @@
             <!-- SCROLLABLE CONTENT -->
             <div class="question-content">
 
-    <div class="question-text">
-        <span th:text="${index + 1} + '. '"></span>
-        <span th:text="${question.questionText}"></span>
-    </div>
+                <div class="question-text"
+                     th:text="${question.questionText}"></div>
 
-    <input type="hidden" name="index" th:value="${index}" />
-    <input type="hidden" name="questionId" th:value="${question.id}" />
+                <input type="hidden" name="index" th:value="${index}" />
+                <input type="hidden" name="questionId" th:value="${question.id}" />
 
-    <div class="options">
-        <label>
-            <input type="radio" name="answer" value="A"
-                   th:checked="${selectedAnswer == 'A'}" />
-            <span th:text="${question.optionA}"></span>
-        </label>
+                <div class="options">
+                    <label>
+                        <input type="radio" name="answer" value="A"
+                               th:checked="${selectedAnswer == 'A'}" />
+                        <span th:text="${question.optionA}"></span>
+                    </label>
 
-        <label>
-            <input type="radio" name="answer" value="B"
-                   th:checked="${selectedAnswer == 'B'}" />
-            <span th:text="${question.optionB}"></span>
-        </label>
+                    <label>
+                        <input type="radio" name="answer" value="B"
+                               th:checked="${selectedAnswer == 'B'}" />
+                        <span th:text="${question.optionB}"></span>
+                    </label>
 
-        <label>
-            <input type="radio" name="answer" value="C"
-                   th:checked="${selectedAnswer == 'C'}" />
-            <span th:text="${question.optionC}"></span>
-        </label>
+                    <label>
+                        <input type="radio" name="answer" value="C"
+                               th:checked="${selectedAnswer == 'C'}" />
+                        <span th:text="${question.optionC}"></span>
+                    </label>
 
-        <label>
-            <input type="radio" name="answer" value="D"
-                   th:checked="${selectedAnswer == 'D'}" />
-            <span th:text="${question.optionD}"></span>
-        </label>
-    </div>
-</div>
-
+                    <label>
+                        <input type="radio" name="answer" value="D"
+                               th:checked="${selectedAnswer == 'D'}" />
+                        <span th:text="${question.optionD}"></span>
+                    </label>
+                </div>
+            </div>
 
             <!-- FOOTER (LEFT PANEL) -->
             <div class="panel-footer">
@@ -118,7 +115,10 @@
                     Attempted & Marked for Review
                 </div>
             </div>
-
+	
+	<div class="note">
+                    Note: Please visit all question at least once to finally submit your exam!
+                </div>
             <form method="post" action="/exam/submit"
                   onsubmit="localStorage.removeItem('visitedQuestions')">
 
