@@ -1,8 +1,10 @@
 package quizApplication.quiz.controller;
 
 import java.security.Principal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +71,9 @@ public class ExamController {
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
 
         List<Question> questions = questionRepo.findByQuizType(quizType);
-
+        
+        Collections.shuffle(questions);
+        
         if (questions.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "No questions available");
             return "redirect:/user/dashboard";
@@ -120,9 +124,7 @@ public class ExamController {
 
 
     @GetMapping("/question")
-    public String question(@RequestParam(required = false) Integer n,
-                           Model model,
-                           HttpSession session) {
+    public String question(Model model, HttpSession session) {
 
         List<Question> questions =
                 (List<Question>) session.getAttribute("questions");
@@ -132,10 +134,6 @@ public class ExamController {
         }
 
         Long startTime = (Long) session.getAttribute("EXAM_START_TIME");
-        if (startTime == null) {
-            return "redirect:/exam/instructions";
-        }
-
         Long durationMs = (Long) session.getAttribute("EXAM_DURATION_MS");
 
         if (startTime == null || durationMs == null) {
@@ -151,7 +149,10 @@ public class ExamController {
 
         model.addAttribute("remainingSeconds", remainingMillis / 1000);
 
-        int index = (n != null) ? n : (int) session.getAttribute("currentQuestion");
+        // ✅ ONLY SOURCE OF TRUTH
+        Integer index = (Integer) session.getAttribute("currentQuestion");
+        if (index == null) index = 0;
+
         index = Math.max(0, Math.min(index, questions.size() - 1));
         session.setAttribute("currentQuestion", index);
 
@@ -167,18 +168,15 @@ public class ExamController {
         Map<Long, String> answers =
                 (Map<Long, String>) session.getAttribute("answers");
 
-        Question currentQuestion = questions.get(index);
-
-        String selectedAnswer = answers != null
-                ? answers.get(currentQuestion.getId())
-                : null;
-
-        model.addAttribute("selectedAnswer", selectedAnswer);
         if (answers == null) {
             answers = new HashMap<>();
             session.setAttribute("answers", answers);
         }
 
+        Question currentQuestion = questions.get(index);
+        String selectedAnswer = answers.get(currentQuestion.getId());
+
+        model.addAttribute("selectedAnswer", selectedAnswer);
 
         // ---------------- MARK VISITED ----------------
         QuestionStatus currentStatus = statusMap.get(index);
@@ -186,59 +184,40 @@ public class ExamController {
             statusMap.put(index, QuestionStatus.VISITED);
         }
 
-        // ---------------- BUILD PALETTE CLASSES ----------------
+        // ---------------- PALETTE ----------------
         List<String> paletteClasses = new ArrayList<>();
 
         for (int i = 0; i < questions.size(); i++) {
-
             QuestionStatus s = statusMap.get(i);
-            String cssClass = "not_visited";
+            String css = "not_visited";
 
             if (s != null) {
                 switch (s) {
-                    case VISITED:
-                        cssClass = "visited";
-                        break;
-                    case ATTEMPTED:
-                        cssClass = "attempted";
-                        break;
-                    case REVIEW:
-                        cssClass = "review";
-                        break;
-                    case ATTEMPTED_REVIEW:
-                        cssClass = "attempted review"; 
-                        break;
-                    default:
-                        cssClass = "not_visited";
+                    case VISITED -> css = "visited";
+                    case ATTEMPTED -> css = "attempted";
+                    case REVIEW -> css = "review";
+                    case ATTEMPTED_REVIEW -> css = "attempted review";
                 }
             }
 
-            // highlight current question
-            if (i == index) {
-                cssClass += " current";
-            }
-
-            paletteClasses.add(cssClass);
+            if (i == index) css += " current";
+            paletteClasses.add(css);
         }
 
-        // ---------------- MODEL + SESSION ----------------
         session.setAttribute("statusMap", statusMap);
 
         model.addAttribute("paletteClasses", paletteClasses);
-        model.addAttribute("question", questions.get(index));
+        model.addAttribute("question", currentQuestion);
         model.addAttribute("index", index);
         model.addAttribute("total", questions.size());
         model.addAttribute("statusMap", statusMap);
-
-        System.out.println("STATUS MAP = " + statusMap);
 
         return "quizPage";
     }
 
     
     @PostMapping("/save")
-    public String saveAnswer(@RequestParam int index,
-                             @RequestParam Long questionId,
+    public String saveAnswer(@RequestParam Long questionId,
                              @RequestParam(required = false) String answer,
                              @RequestParam String action,
                              HttpSession session,
@@ -257,6 +236,14 @@ public class ExamController {
         List<Question> questions =
                 (List<Question>) session.getAttribute("questions");
 
+        // ✅ INDEX FROM SESSION ONLY
+        int index = (int) session.getAttribute("currentQuestion");
+
+        if (index < 0 || index >= questions.size()) {
+            throw new IllegalStateException("Invalid question index");
+        }
+
+        // ---------------- ACTIONS ----------------
         if ("clear".equals(action)) {
             answers.remove(questionId);
             statusMap.put(index, QuestionStatus.VISITED);
@@ -280,11 +267,11 @@ public class ExamController {
             }
         }
 
-        // 💾 SAVE TO SESSION
+        // ---------------- SAVE SESSION ----------------
         session.setAttribute("answers", answers);
         session.setAttribute("statusMap", statusMap);
 
-        // 💾 SAVE TO DATABASE (KEY STEP)
+        // ---------------- SAVE DB ----------------
         ExamAttempt attempt =
                 examAttemptRepo.findByUsernameAndCompletedFalse(principal.getName());
 
@@ -295,10 +282,11 @@ public class ExamController {
 
         examAttemptRepo.save(attempt);
 
+        // ---------------- NEXT ----------------
         int nextIndex = Math.min(index + 1, questions.size() - 1);
         session.setAttribute("currentQuestion", nextIndex);
 
-        return "redirect:/exam/question?n=" + nextIndex;
+        return "redirect:/exam/question";
     }
 
 
@@ -335,7 +323,6 @@ public class ExamController {
         return "redirect:/exam/summary";
     }
 
-    
     @GetMapping("/resume")
     public String resumeExam(HttpSession session, Principal principal) throws Exception {
 
@@ -350,35 +337,53 @@ public class ExamController {
 
         List<Question> questions =
                 questionRepo.findByQuizType(attempt.getQuizType());
-
+        Collections.shuffle(questions);
+        
+        
         Map<Long, String> answers =
                 mapper.readValue(attempt.getAnswersJson(),
-                    new TypeReference<Map<Long, String>>() {});
+                        new TypeReference<>() {});
 
         Map<Integer, QuestionStatus> statusMap =
                 mapper.readValue(attempt.getStatusJson(),
-                    new TypeReference<Map<Integer, QuestionStatus>>() {});
+                        new TypeReference<>() {});
+
         Quiz quiz = quizRepository.findByTitle(attempt.getQuizType())
                 .orElseThrow();
 
         long durationMs = quiz.getTimeLimit() * 60L * 1000L;
 
-        long elapsed =
-            java.time.Duration.between(attempt.getStartedAt(), LocalDateTime.now()).toMillis();
+        long elapsed = Duration.between(
+                attempt.getStartedAt(), LocalDateTime.now()).toMillis();
 
         session.setAttribute("EXAM_START_TIME",
                 System.currentTimeMillis() - elapsed);
 
         session.setAttribute("EXAM_DURATION_MS", durationMs);
-
         session.setAttribute("questions", questions);
         session.setAttribute("answers", answers);
         session.setAttribute("statusMap", statusMap);
         session.setAttribute("currentQuestion", attempt.getCurrentQuestion());
 
-     
+        return "redirect:/exam/question";
+    }
 
-        return "redirect:/exam/question?n=" + attempt.getCurrentQuestion();
+    
+    @PostMapping("/jump")
+    public String jumpToQuestion(@RequestParam int targetIndex,
+                                 HttpSession session) {
+
+        List<Question> questions =
+                (List<Question>) session.getAttribute("questions");
+
+        if (questions == null) {
+            return "redirect:/user/dashboard";
+        }
+
+        targetIndex = Math.max(0, Math.min(targetIndex, questions.size() - 1));
+        session.setAttribute("currentQuestion", targetIndex);
+
+        return "redirect:/exam/question";
     }
 
     

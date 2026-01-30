@@ -1,135 +1,147 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<title>Online Examination</title>
-<link rel="stylesheet" th:href="@{/css/local/quizPage.css}">
+    <title>Online Examination</title>
+    <link rel="stylesheet" th:href="@{/css/local/quizPage.css}">
 </head>
 
 <body>
 
-	<!-- HEADER -->
-	<div class="exam-header">
-		<div class="exam-title">Online Examination</div>
-		<div class="timer" id="timer">Timer</div>
-	</div>
+<!-- HEADER -->
+<div class="exam-header">
+    <div class="exam-title">Online Examination</div>
+    <div class="timer" id="timer">Timer</div>
+</div>
 
-	<div class="exam-container">
+<div class="exam-container">
 
-		<!-- LEFT PANEL -->
-		<div class="question-panel">
+    <!-- LEFT PANEL -->
+    <div class="question-panel">
 
-			<form id="examForm" method="post" action="/exam/save"
-				style="height: 100%; display: flex; flex-direction: column;">
+        <form id="examForm" method="post" action="/exam/save"
+              style="height: 100%; display: flex; flex-direction: column;">
 
-				<!-- SCROLLABLE CONTENT -->
-				<div class="question-content">
-					<div>
-						<span class="question-text" th:text="${question.questionText}">The
-							Question Text</span>
-					</div>
+            <!-- SCROLLABLE CONTENT -->
+            <div class="question-content">
+                <div>
+                    <span class="question-text"
+                          th:text="${question.questionText}">
+                        Question Text
+                    </span>
+                </div>
 
+                <!-- ✅ ONLY questionId is needed -->
+                <input type="hidden" name="questionId" th:value="${question.id}"/>
 
+                <div class="options">
+                    <label>
+                        <input type="radio" name="answer" value="A"
+                               th:checked="${selectedAnswer == 'A'}"/>
+                        <span th:text="${question.optionA}"></span>
+                    </label>
 
-			<!--	<div class="question-text" th:text="${question.questionText}"></div> -->
+                    <label>
+                        <input type="radio" name="answer" value="B"
+                               th:checked="${selectedAnswer == 'B'}"/>
+                        <span th:text="${question.optionB}"></span>
+                    </label>
 
-					<input type="hidden" name="index" th:value="${index}" /> <input
-						type="hidden" name="questionId" th:value="${question.id}" /> <br>
-					<br>
-					<div class="options">
-						<label> <input type="radio" name="answer" value="A"
-							th:checked="${selectedAnswer == 'A'}" /> <span
-							th:text="${question.optionA}"></span>
-						</label> <label> <input type="radio" name="answer" value="B"
-							th:checked="${selectedAnswer == 'B'}" /> <span
-							th:text="${question.optionB}"></span>
-						</label> <label> <input type="radio" name="answer" value="C"
-							th:checked="${selectedAnswer == 'C'}" /> <span
-							th:text="${question.optionC}"></span>
-						</label> <label> <input type="radio" name="answer" value="D"
-							th:checked="${selectedAnswer == 'D'}" /> <span
-							th:text="${question.optionD}"></span>
-						</label>
-					</div>
-				</div>
+                    <label>
+                        <input type="radio" name="answer" value="C"
+                               th:checked="${selectedAnswer == 'C'}"/>
+                        <span th:text="${question.optionC}"></span>
+                    </label>
 
-				<!-- FOOTER (LEFT PANEL) -->
-				<div class="panel-footer">
-					<div class="buttons-row">
-						<button type="submit" name="action" value="clear"
-							class="btn clear">Clear Response</button>
+                    <label>
+                        <input type="radio" name="answer" value="D"
+                               th:checked="${selectedAnswer == 'D'}"/>
+                        <span th:text="${question.optionD}"></span>
+                    </label>
+                </div>
+            </div>
 
-						<button type="submit" name="action" value="review"
-							class="btn review-btn">Save & Mark for Review</button>
+            <!-- FOOTER -->
+            <div class="panel-footer">
+                <div class="buttons-row">
+                    <button type="submit" name="action" value="clear"
+                            class="btn clear">Clear Response</button>
 
-						<button type="submit" name="action" value="next" class="btn save">
-							Save & Next</button>
-					</div>
+                    <button type="submit" name="action" value="review"
+                            class="btn review-btn">Save & Mark for Review</button>
 
-					<div class="note">Note: Please save before jumping to next
-						question else the answer will not be saved!</div>
-				</div>
+                    <button type="submit" name="action" value="next"
+                            class="btn save">Save & Next</button>
+                </div>
 
-			</form>
-		</div>
+                <div class="note">
+                    Note: Please save before moving forward, otherwise
+                    your answer will not be saved.
+                </div>
+            </div>
 
-		<!-- RIGHT PANEL -->
-		<div class="palette-panel">
+        </form>
+    </div>
 
-			<!-- SCROLLABLE CONTENT -->
-			<div class="palette-content">
-				<div class="palette-header">Question Palette</div>
+    <!-- RIGHT PANEL -->
+    <div class="palette-panel">
 
-				<div class="palette">
-					<a th:each="i : ${#numbers.sequence(0, total-1)}"
-						th:href="@{/exam/question(n=${i})}" th:text="${i + 1}"
-						th:class="${paletteClasses[i]}"> </a>
-				</div>
-			</div>
+        <div class="palette-content">
+            <div class="palette-header">Question Palette</div>
 
-			<!-- STICKY LEGEND + SUBMIT -->
-			<div class="panel-footer">
+          <form id="jumpForm" method="post" action="/exam/jump" style="display:none;">
+    <input type="hidden" name="targetIndex" id="jumpIndex">
+</form>
 
-				<div class="legend">
-					<div>
-						<span class="box not_visited"></span> Not Visited
-					</div>
-					<div>
-						<span class="box visited"></span> Visited
-					</div>
-					<div>
-						<span class="box attempted"></span> Attempted
-					</div>
-					<div>
-						<span class="box review"></span> Marked for Review
-					</div>
-					<div>
-						<span class="box attempted-review"></span> <span
-							style="color: #4caf50; font-weight: bold;">●</span> Attempted &
-						Marked for Review
-					</div>
-				</div>
+<div class="palette">
+    <a th:each="i : ${#numbers.sequence(0, total-1)}"
+       href="#"
+       th:text="${i + 1}"
+       th:class="${paletteClasses[i]}"
+       th:onclick="'jumpTo(' + ${i} + ')'">
+    </a>
+</div>
 
-				<div class="note">Note: Please visit all question at least
-					once to finally submit your exam!</div>
-				<form method="post" action="/exam/submit"
-					onsubmit="localStorage.removeItem('visitedQuestions')">
+        </div>
 
-					<button type="submit" class="btn submit" id="submitBtn" disabled>
-						Submit Exam</button>
+        <!-- LEGEND + SUBMIT -->
+        <div class="panel-footer">
 
-				</form>
-			</div>
-		</div>
-	</div>
+            <div class="legend">
+                <div><span class="box not_visited"></span> Not Visited</div>
+                <div><span class="box visited"></span> Visited</div>
+                <div><span class="box attempted"></span> Attempted</div>
+                <div><span class="box review"></span> Marked for Review</div>
+                <div>
+                    <span class="box attempted-review"></span>
+                    <span style="color:#4caf50;font-weight:bold;">●</span>
+                    Attempted & Marked for Review
+                </div>
+            </div>
 
-	<!-- TIMER -->
-	<script th:inline="javascript">
+            <div class="note">
+                Note: Please visit all questions at least once to submit.
+            </div>
+
+            <form method="post" action="/exam/submit"
+                  onsubmit="localStorage.removeItem('visitedQuestions')">
+                <button type="submit" class="btn submit"
+                        id="submitBtn" disabled>
+                    Submit Exam
+                </button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- TIMER -->
+<script th:inline="javascript">
     let time = [[${remainingSeconds}]];
 </script>
-	<script th:src="@{/js/local/timer.js}"></script>
+<script th:src="@{/js/local/timer.js}"></script>
 
-	<!-- VISIT TRACKING SCRIPT -->
-	<script th:inline="javascript">
+<!-- VISIT TRACKING -->
+<script th:inline="javascript">
     const totalQuestions = [[${total}]];
     const currentIndex = [[${index}]];
     const STORAGE_KEY = "visitedQuestions";
@@ -142,11 +154,18 @@
     }
 
     const submitBtn = document.getElementById("submitBtn");
-
     if (visited.length === totalQuestions) {
         submitBtn.disabled = false;
     }
 </script>
+<script>
+    function jumpTo(index) {
+        document.getElementById("jumpIndex").value = index;
+        document.getElementById("jumpForm").submit();
+    }
+</script>
+
+
 
 </body>
 </html>

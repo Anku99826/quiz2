@@ -130,20 +130,21 @@
 			th:attr="data-status=${q.correctAnswer == answers[q.id] ? 'correct' : 'wrong'}">
 
 
-			<!-- Question Header -->
 			<div class="d-flex justify-content-between align-items-start mb-1">
 				<div class="fw-semibold">
-					Q<span th:text="${q.id}"></span>. <span th:text="${q.questionText}"></span>
+					Q<span th:text="${stat.index + 1}"></span>. <span
+						th:text="${q.questionText}"></span>
 				</div>
 
 				<span class="badge"
 					th:classappend="${q.correctAnswer == answers[q.id]}
-                        ? 'bg-success'
-                        : 'bg-danger'">
+              ? 'bg-success'
+              : 'bg-danger'">
 					<span
 					th:text="${q.correctAnswer == answers[q.id] ? 'Correct' : 'Wrong'}"></span>
 				</span>
 			</div>
+
 
 			<!-- Options -->
 			<div class="row">
