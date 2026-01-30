@@ -87,7 +87,7 @@ function detectDevTools() {
 function showAlert() {
     if (devtoolsAlertsClosed >= maxAlerts) return;
 
-    alert(`Warning: Developer tools are not allowe during the quiz!`);
+    alert(`Warning: Developer tools are not allowed during the quiz!`);
     devtoolsAlertsClosed++;
 
     // After user closes alert, check if DevTools still open
