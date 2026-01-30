@@ -23,9 +23,9 @@
 
 				<!-- SCROLLABLE CONTENT -->
 				<div class="question-content">
-
+					<strong><span>Question </span><span th:text="${question.id} + '. '">1. </span></strong> 
 					<div>
-						<span th:text="${question.id} + '. '">1. </span> 
+						
 						<span
 							class="question-text" th:text="${question.questionText}">The
 							Question Text</span>
