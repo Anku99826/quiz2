@@ -97,7 +97,7 @@ public class AdminController {
 	public String createAdmin(@RequestParam String loginId, @RequestParam String password, @RequestParam String role) {
 
 		service.createAdmin(loginId, password, role);
-		return "redirect:/admin/manage-users";
+		return "redirect:/admin/manage-users";	
 	}
 
 	@PostMapping("/manage-users/reset/{id}")
@@ -208,7 +208,7 @@ public class AdminController {
 		return "admin-question-preview";
 	}
 
-	// download sample
+	// download sample template
 	@GetMapping("/questions/template")
 	public void downloadCsvTemplate(HttpServletResponse response) throws IOException {
 
@@ -344,20 +344,18 @@ public class AdminController {
 	    // Get real data from repo
 	    List<Object[]> reports = examAttemptRepo.userPerformanceByQuiz(quizType);
 
-	    // --- TEMP: Add sample users if less than 100 for demo ---
-	    int currentCount = reports.size();
-	    LocalDateTime now = LocalDateTime.now();
-
-	    for (int i = currentCount + 1; i <= 100; i++) {
-	        String username = "user" + i;
-	        long totalAttempts = (long) (Math.random() * 10 + 1);
-	        long score = (long) (Math.random() * 100);
-	        LocalDateTime lastAttempt = now.minusDays((long) (Math.random() * 30));
-
-	        reports.add(new Object[]{username, totalAttempts, score, lastAttempt});
-	    }
-	    // ----------------------------------------------------------
-
+		/*
+		 * // --- TEMP: Add sample users if less than 100 for demo --- int currentCount
+		 * = reports.size(); LocalDateTime now = LocalDateTime.now();
+		 * 
+		 * for (int i = currentCount + 1; i <= 100; i++) { String username = "user" + i;
+		 * long totalAttempts = (long) (Math.random() * 10 + 1); long score = (long)
+		 * (Math.random() * 100); LocalDateTime lastAttempt = now.minusDays((long)
+		 * (Math.random() * 30));
+		 * 
+		 * reports.add(new Object[]{username, totalAttempts, score, lastAttempt}); } //
+		 * ----------------------------------------------------------
+		 */
 	    model.addAttribute("reports", reports);
 	    model.addAttribute("selectedQuiz", quizType);
 
@@ -492,17 +490,15 @@ public class AdminController {
 	    // Fetch real user performance data
 	    List<Object[]> reports = examAttemptRepo.userPerformanceByQuiz(quizType);
 
-	    // Optional: add sample users for testing if needed
-	    int currentCount = reports.size();
-	    LocalDateTime now = LocalDateTime.now();
-	    for (int i = currentCount + 1; i <= 100; i++) {
-	        String username = "user" + i;
-	        long totalAttempts = 1;          // Usually 1 attempt
-	        int score = (int) (Math.random() * 100);
-	        LocalDateTime lastAttempt = now.minusDays((long) (Math.random() * 30));
-	        String quizTitle = quizType;     // same quiz
-	        reports.add(new Object[]{username, totalAttempts, score, lastAttempt, quizTitle});
-	    }
+		/*
+		 * // Optional: add sample users for testing if needed int currentCount =
+		 * reports.size(); LocalDateTime now = LocalDateTime.now(); for (int i =
+		 * currentCount + 1; i <= 100; i++) { String username = "user" + i; long
+		 * totalAttempts = 1; // Usually 1 attempt int score = (int) (Math.random() *
+		 * 100); LocalDateTime lastAttempt = now.minusDays((long) (Math.random() * 30));
+		 * String quizTitle = quizType; // same quiz reports.add(new Object[]{username,
+		 * totalAttempts, score, lastAttempt, quizTitle}); }
+		 */
 
 	    // Initialize PDF
 	    Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
@@ -728,7 +724,7 @@ public class AdminController {
 	    // 7️⃣ Fonts
 	    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
 	    Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
-	    Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+	   
 	    Font correctFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.GREEN);
 	    Font wrongFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.RED);
 

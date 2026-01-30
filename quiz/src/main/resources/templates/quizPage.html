@@ -23,21 +23,17 @@
 
 				<!-- SCROLLABLE CONTENT -->
 				<div class="question-content">
-					<strong><span>Question </span><span th:text="${question.id} + '. '">1. </span></strong> 
 					<div>
-						
-						<span
-							class="question-text" th:text="${question.questionText}">The
+						<span class="question-text" th:text="${question.questionText}">The
 							Question Text</span>
 					</div>
 
 
 
-<!-- 					<div class="question-text" th:text="${question.questionText}"></div> -->
-		
+			<!--	<div class="question-text" th:text="${question.questionText}"></div> -->
+
 					<input type="hidden" name="index" th:value="${index}" /> <input
-						type="hidden" name="questionId" th:value="${question.id}" />
-					<br>
+						type="hidden" name="questionId" th:value="${question.id}" /> <br>
 					<br>
 					<div class="options">
 						<label> <input type="radio" name="answer" value="A"
